@@ -31,10 +31,6 @@ jobs:
             platforms;android-35
             build-tools;35.0.0
 
-      - name: INSTALL ANDROID SDK
-        run: |
-          sdkmanager --licenses
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: BUILD APK
         run: |
