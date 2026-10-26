@@ -1,4 +1,4 @@
-package com.shadore.booster
+package with.shadore.booster
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -23,26 +23,140 @@ import java.io.InputStreamReader
 import java.security.MessageDigest
 
 class MainActivity : ComponentActivity() {
-
-    private var logText by mutableStateOf("Menunggu...")
+    private var logText by mutableStateOf("Ready.")
     private var isLoggedIn by mutableStateOf(false)
-    private var isShadOn by mutableStateOf(false)
     private var deviceId by mutableStateOf("")
-    private val SECRET = "shadore_secret_key_v2_2025"
-    private val PERM_CODE = 1001
+    private var isBoostOn by mutableStateOf(false)
+    private val SECRET = "shadore_secret_v2_2025_pro"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
         val prefs = getSharedPreferences("shadore", Context.MODE_PRIVATE)
         isLoggedIn = prefs.getBoolean("logged_in", false) && prefs.getString("device_id", "") == deviceId
-        isShadOn = prefs.getBoolean("shad_on", false)
-
-        Shizuku.addRequestPermissionResultListener { _, grantResult ->
-            if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                logText = "Shizuku Connected! Siap ON"
-            }
-        }
+        isBoostOn = prefs.getBoolean("boost_on", false)
 
         setContent {
-           
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF0A0A0A)) {
+                    if (!isLoggedIn) LoginScreen() else BoosterScreen()
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun LoginScreen() {
+        var keyInput by remember { mutableStateOf("") }
+        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text("shadØre", fontSize = 42.sp, fontWeight = FontWeight.Black, color = Color.White)
+            Text("DEVICE LOCKED", fontSize = 12.sp, color = Color(0xFFFF3B30), letterSpacing = 3.sp)
+            Spacer(Modifier.height(16.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp)) {
+                    Text("DEVICE ID:", color = Color.Gray, fontSize = 10.sp)
+                    Text(deviceId, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+            OutlinedTextField(value = keyInput, onValueChange = { keyInput = it }, label = { Text("Key Aktivasi") }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = { checkKey(keyInput) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30)), modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text("ACTIVATE")
+            }
+        }
+    }
+
+    @Composable
+    fun BoosterScreen() {
+        Column(Modifier.fillMaxSize().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text("shadØre", fontSize = 40.sp, fontWeight = FontWeight.Black, color = Color.White)
+            Text(if(isBoostOn) "SYSTEM BOOST: ON" else "SYSTEM BOOST: OFF", color = if(isBoostOn) Color.Green else Color.Gray, fontSize = 12.sp, letterSpacing = 3.sp)
+            Spacer(Modifier.height(24.dp))
+            
+            // INI TOGGLE YANG NGARUH KE SISTEM
+            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Shizuku Boost", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(if(isBoostOn) "Berpengaruh ke sistem" else "Mati", fontSize = 11.sp, color = Color.Gray)
+                    }
+                    Switch(checked = isBoostOn, onCheckedChange = { toggleBoost(it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFFF3B30), checkedTrackColor = Color(0x55FF3B30)))
+                }
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Text(logText, color = Color(0xFF00FF00), fontSize = 11.sp, modifier = Modifier.fillMaxWidth().height(200.dp))
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { toggleBoost(!isBoostOn) }, colors = ButtonDefaults.buttonColors(containerColor = if(isBoostOn) Color.DarkGray else Color(0xFFFF3B30)), modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text(if(isBoostOn) "MATIKAN BOOST" else "NYALAKAN BOOST", fontWeight = FontWeight.Black)
+            }
+        }
+    }
+
+    private fun generateKey(devId: String): String {
+        val md = MessageDigest.getInstance("SHA-256")
+        val hash = md.digest((devId + SECRET).toByteArray()).joinToString("") { "%02x".format(it) }.uppercase()
+        return "SHADØRE-${hash.substring(0,4)}-${hash.substring(4,8)}-${hash.substring(8,12)}"
+    }
+
+    private fun checkKey(input: String) {
+        if (input.trim().uppercase() == generateKey(deviceId)) {
+            getSharedPreferences("shadore", Context.MODE_PRIVATE).edit().putBoolean("logged_in", true).putString("device_id", deviceId).apply()
+            isLoggedIn = true
+            Toast.makeText(this, "Activated!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Key Salah! Key harusnya: ${generateKey(deviceId)}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun toggleBoost(on: Boolean) {
+        try {
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+                Shizuku.requestPermission(100)
+                Toast.makeText(this, "Allow Shizuku dulu!", Toast.LENGTH_SHORT).show()
+                return
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Shizuku belum terinstall!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isBoostOn = on
+        getSharedPreferences("shadore", Context.MODE_PRIVATE).edit().putBoolean("boost_on", on).apply()
+
+        Thread {
+            if (on) {
+                log(">>> SHADØRE ON - MINTA AKSES SHIZUKU & PENGARUHI SISTEM")
+                // INI YANG BIKIN NGARUH KE SISTEM VIA SHIZUKU
+                runCmd("cmd power set-fixed-performance-mode-enabled true")
+                runCmd("cmd thermalservice override-status 0") // matiin throttling
+                runCmd("settings put global window_animation_scale 0.5")
+                runCmd("settings put global transition_animation_scale 0.5")
+                runCmd("settings put global animator_duration_scale 0.5")
+                runCmd("cmd package bg-dexopt-job") // compile ulang biar ngebut
+                runCmd("dumpsys deviceidle whitelist +with.shadore.booster")
+                runCmd("am kill-all") // bersihin ram
+                log(">>> BOOST AKTIF! Performance mode ON, Thermal OFF")
+            } else {
+                log(">>> SHADØRE OFF - RESTORE SISTEM")
+                runCmd("cmd power set-fixed-performance-mode-enabled false")
+                runCmd("cmd thermalservice override-status -1")
+                runCmd("settings put global window_animation_scale 1.0")
+                runCmd("settings put global transition_animation_scale 1.0")
+                runCmd("settings put global animator_duration_scale 1.0")
+                log(">>> BOOST MATI, sistem balik normal")
+            }
+        }.start()
+    }
+
+    private fun runCmd(cmd: String) {
+        try {
+            val p: ShizukuRemoteProcess = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            p.waitFor()
+            val r = BufferedReader(InputStreamReader(p.inputStream)).readText()
+            log("> $cmd\n$r")
+        } catch (e: Exception) { log("ERR: ${e.message}") }
+    }
+    private fun log(s: String) { runOnUiThread { logText += "\n$s" } }
+}
