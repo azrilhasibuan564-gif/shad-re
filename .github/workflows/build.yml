@@ -32,9 +32,14 @@ jobs:
           sdkmanager --licenses
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Build Debug APK
+      
+      - name: Build APK
         run: |
-          gradle assembleDebug --stacktrace --info --warning-mode all
+          echo "=== CEK FILE PROYEK ==="
+          pwd
+          ls -la
+          echo "=== CEK FILE GRADLE ==="
+          find . -maxdepth 3 \( -name "gradlew" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" \) -print
 
       - name: Upload APK
         if: success()
