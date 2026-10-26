@@ -13,14 +13,18 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Setup Gradle 8.7
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.7
-      - name: Build APK
+          gradle-version: 8.9
+      - name: Build APK Debug
         run: gradle assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: shad-re-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/debug/*.apk
