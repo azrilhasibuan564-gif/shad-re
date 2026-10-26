@@ -33,18 +33,17 @@ jobs:
           fi
           chmod +x gradlew
 
-      # Langkah Perbaikan: Menjalankan build dengan flag stacktrace agar memunculkan pesan eror yang jelas
+      # Perbaikan: Menangkap log ke file, lalu otomatis menampilkan baris eror utama jika gagal
       - name: Build APK with Gradle
         run: |
           if [ -f "gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug --stacktrace > build_log.txt 2>&1 || { grep -i -E "error|caused by|failure" build_log.txt | head -n 30; exit 1; }
           else
             SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
             cd $SUBFOLDER
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug --stacktrace > build_log.txt 2>&1 || { grep -i -E "error|caused by|failure" build_log.txt | head -n 30; exit 1; }
           fi
 
-      # Tetap unggah APK jika ada (berjaga-jaga jika sebenarnya build berhasil tapi ada warning dianggap eror)
       - name: Upload APK Artifact
         if: always()
         uses: actions/upload-artifact@v4
