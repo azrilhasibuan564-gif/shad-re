@@ -13,14 +13,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Grant execute permission
-        run: chmod +x gradlew
-      - name: Build with Gradle Wrapper
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+      - name: Build APK
+        run: gradle assembleDebug --stacktrace
       - name: Upload APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: shad-re-apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
