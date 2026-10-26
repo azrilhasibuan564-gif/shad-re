@@ -35,11 +35,11 @@ jobs:
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       
+      
       - name: Build Debug APK
         run: |
-          set -o pipefail
-          gradle assembleDebug --stacktrace --warning-mode all 2>&1 | tee build-log.txt
-
+          gradle :app:checkDebugAarMetadata --stacktrace --info --warning-mode all
+          
 
       - name: Upload build log
         if: always()
