@@ -1,23 +1,40 @@
-name: Build APK
-on: workflow_dispatch
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main # Jalankan otomatis setiap kali Anda melakukan push ke branch main
+  workflow_dispatch: # Memungkinkan Anda menjalankan build secara manual dari menu Actions
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      # 1. Mengambil kode dari repositori
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Mengatur versi Java (Sesuaikan versi JDK dengan proyek Android Anda, umumnya menggunakan 17)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
-      - name: Setup Gradle 8.9
-        uses: gradle/actions/setup-gradle@v3
+          cache: 'gradle'
+
+      # 3. Memberikan izin akses (permission) agar Gradle bisa dieksekusi
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      # 4. Menjalankan proses kompilasi APK (mode Debug)
+      - name: Build APK with Gradle
+        run: ./gradlew assembleDebug
+
+      # 5. Mengunggah hasil APK agar bisa diunduh langsung dari GitHub
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          gradle-version: 8.9
-      - name: Show error detail
-        run: gradle assembleDebug --info --stacktrace || true
-      - name: Build
-        run: gradle assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: shad-re-apk
+          name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          
