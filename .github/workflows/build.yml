@@ -35,8 +35,11 @@ jobs:
           sdkmanager --licenses
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
+      
       - name: BUILD APK
-        run: gradle assembleDebug --stacktrace
+        run: |
+          gradle assembleDebug --stacktrace --info --warning-mode all 2>&1 | tee build-log.txt
+          
 
       - name: UPLOAD APK
         if: success()
@@ -51,6 +54,7 @@ jobs:
         run: |
           echo "Build selesai dengan status: ${{ job.status }}" > build-log.txt
 
+      
       - name: UPLOAD BUILD LOG
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,4 +62,5 @@ jobs:
           name: BUILD-LOG-${{ github.run_id }}-${{ github.run_attempt }}
           path: build-log.txt
           if-no-files-found: warn
+          
           
