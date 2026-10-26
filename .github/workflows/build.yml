@@ -34,7 +34,8 @@ jobs:
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
       
       - name: BUILD APK
-        run: gradle assembleDebug --stacktrace --info
+        run: |
+          gradle assembleDebug --stacktrace --info > build-log.txt 2>&1
 
       - name: UPLOAD APK
         if: always()
