@@ -74,6 +74,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: shadore-apk
+          name: shadore-apk-${{ github.run_attempt }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
