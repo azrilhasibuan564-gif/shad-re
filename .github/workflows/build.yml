@@ -1,11 +1,10 @@
 
-name: Build shad∅re APK
+name: Build shadore APK
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
@@ -24,26 +23,20 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission
+      - name: Install Android SDK packages
         run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-          fi
+          sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Build APK
         run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            echo "ERROR: gradlew tidak ditemukan di root proyek."
-            exit 1
-          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: shadore-debug-apk
-          path: '**/build/outputs/apk/debug/*.apk'
+          name: shadore-apk
+          path: "**/build/outputs/apk/debug/*.apk"
           if-no-files-found: error
           
