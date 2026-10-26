@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity() {
             isLoggedIn = true
             Toast.makeText(this, "Activated!", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "Key Salah! Key harusnya: ${generateKey(deviceId)}", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Key Salah! Hubungi seller. Device ID: $deviceId", Toast.LENGTH_LONG).show()
         }
     }
 
