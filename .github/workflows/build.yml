@@ -37,7 +37,7 @@ jobs:
         run: gradle assembleDebug --stacktrace --info
 
       - name: UPLOAD APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: SHADORE-V1-X-AZRIL-${{ github.run_id }}-${{ github.run_attempt }}
