@@ -42,19 +42,18 @@ jobs:
           find . -maxdepth 3 \( -name "gradlew" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" \) -print
           
           
-
       
-      - name: Find generated APK
+      - name: Check APK files
+        if: always()
         run: |
-          echo "Mencari file APK..."
+          echo "Memeriksa file APK..."
           find . -type f -name "*.apk" -print
+          echo "Pemeriksaan selesai."
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: shadore-apk
-          path: "**/*.apk"
-          if-no-files-found: error
-          
-          
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn   
