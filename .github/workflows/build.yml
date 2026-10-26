@@ -22,10 +22,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: ''
+
 
       - name: Install Android SDK packages
         run: |
@@ -33,14 +35,21 @@ jobs:
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       
-      - name: Build APK
+      - name: Build Debug APK
         run: |
-          echo "=== CEK FILE PROYEK ==="
-          pwd
-          ls -la
-          echo "=== CEK FILE GRADLE ==="
-          find . -maxdepth 3 \( -name "gradlew" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" \) -print
+          set -o pipefail
+          gradle assembleDebug --stacktrace --warning-mode all 2>&1 | tee build-log.txt
 
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shadore-build-log
+          path: build-log.txt
+          if-no-files-found: ignore
+
+          
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
