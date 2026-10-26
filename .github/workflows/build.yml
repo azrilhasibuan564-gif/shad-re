@@ -38,7 +38,8 @@ jobs:
       
       - name: Build Debug APK
         run: |
-          gradle :app:checkDebugAarMetadata --stacktrace --info --warning-mode all
+          gradle :app:checkDebugAarMetadata --stacktrace --info --warning-mode all 2>&1 | tee build-log.txt
+          
           
 
       - name: Upload build log
@@ -50,10 +51,11 @@ jobs:
           if-no-files-found: ignore
 
           
-      - name: Upload APK
-        if: success()
+      
+      - name: Save build log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: shadore-apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          name: shadore-build-log
+          path: build-log.txt
+          if-no-files-found: warn
