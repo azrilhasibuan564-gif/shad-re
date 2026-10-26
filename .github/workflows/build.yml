@@ -53,7 +53,7 @@ jobs:
           
       
       
-      - name: Save build log
+      - name: shadore-build-log-final
         if: always()
         uses: actions/upload-artifact@v4
         with:
