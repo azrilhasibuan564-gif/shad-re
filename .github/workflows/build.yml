@@ -1,3 +1,4 @@
+
 name: Build shadore APK
 
 on:
@@ -19,36 +20,20 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-          
 
       - name: Install Android SDK packages
         run: |
           sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      
-      
-      - name: Build APK
+      - name: Build Debug APK
         run: |
-          echo "=== CEK FILE PROYEK ==="
-          pwd
-          ls -la
-          echo "=== CEK FILE GRADLE ==="
-          find . -maxdepth 3 \( -name "gradlew" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle" -o -name "build.gradle.kts" \) -print
-          
-          
-      
-      - name: Check APK files
-        if: always()
-        run: |
-          echo "Memeriksa file APK..."
-          find . -type f -name "*.apk" -print
-          echo "Pemeriksaan selesai."
+          gradle assembleDebug
 
       - name: Upload APK
         if: success()
@@ -56,4 +41,4 @@ jobs:
         with:
           name: shadore-apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn   
+          if-no-files-found: error
