@@ -3,19 +3,17 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main # Jalankan otomatis setiap kali Anda melakukan push ke branch main
-  workflow_dispatch: # Memungkinkan Anda menjalankan build secara manual dari menu Actions
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Mengambil kode dari repositori
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Mengatur versi Java (Sesuaikan versi JDK dengan proyek Android Anda, umumnya menggunakan 17)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -23,18 +21,37 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # 3. Memberikan izin akses (permission) agar Gradle bisa dieksekusi
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
+      # Langkah Perbaikan: Otomatis membuat gradlew jika tidak ditemukan di root
+      - name: Ensure Gradle Wrapper Exists
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "gradlew tidak ditemukan di folder utama. Mencari di subfolder..."
+            SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
+            if [ -n "$SUBFOLDER" ]; then
+              echo "Menemukan proyek di folder: $SUBFOLDER"
+              cd $SUBFOLDER
+            else
+              echo "gradlew benar-benar tidak ada. Membuat wrapper baru..."
+              gradle wrapper
+            fi
+          fi
+          chmod +x gradlew
 
-      # 4. Menjalankan proses kompilasi APK (mode Debug)
+      # Menjalankan build (mendukung jika proyek berada di folder utama maupun subfolder)
       - name: Build APK with Gradle
-        run: ./gradlew assembleDebug
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
+            cd $SUBFOLDER
+            ./gradlew assembleDebug
+          fi
 
-      # 5. Mengunggah hasil APK agar bisa diunduh langsung dari GitHub
+      # Mengunggah hasil APK
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
           
