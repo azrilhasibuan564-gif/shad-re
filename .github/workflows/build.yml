@@ -1,8 +1,5 @@
 name: Build APK
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,10 +13,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.9
-      - name: Build APK
-        run: gradle assembleDebug --stacktrace
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Show error detail
+        run: gradle assembleDebug --info --stacktrace || true
+      - name: Build
+        run: gradle assembleDebug
+      - uses: actions/upload-artifact@v4
         with:
           name: shad-re-apk
           path: app/build/outputs/apk/debug/*.apk
