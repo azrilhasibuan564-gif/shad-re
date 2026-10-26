@@ -8,12 +8,12 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="shadØre"
+        android:label="shadore"
         android:theme="@android:style/Theme.Black.NoTitleBar">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="shadØre">
+            android:label="shadore">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
