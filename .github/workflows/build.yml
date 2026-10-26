@@ -32,9 +32,9 @@ jobs:
           sdkmanager --licenses
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Build Debug APK
+     - name: Build Debug APK
         run: |
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace --info --warning-mode all
 
       - name: Upload APK
         if: success()
