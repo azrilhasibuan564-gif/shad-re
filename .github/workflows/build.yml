@@ -1,4 +1,5 @@
-name: Build shadore APK
+
+name: BUILD SHADORE V1 X AZRIL
 
 on:
   workflow_dispatch:
@@ -10,70 +11,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: CHECKOUT SOURCE
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: SET UP JAVA
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Gradle
+      - name: SET UP GRADLE
         uses: gradle/actions/setup-gradle@v4
 
-
-      - name: Set up Android SDK
+      - name: SET UP ANDROID SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: ''
 
-
-      - name: Install Android SDK packages
+      - name: INSTALL ANDROID SDK PACKAGES
         run: |
           sdkmanager --licenses
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      
-      
-      - name: Build Debug APK
-        run: |
-          gradle :app:checkDebugAarMetadata --stacktrace --info --warning-mode all 2>&1 | tee build-log.txt
-          
-          
+      - name: BUILD APK
+        run: gradle assembleDebug --stacktrace
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shadore-build-log
-          path: build-log.txt
-          if-no-files-found: ignore
-
-                
-      
-      - name: Save build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shadore-build-log-${{ github.run_attempt }}
-          path: build-log.txt
-          if-no-files-found: warn
-
-
-      - name: Save build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shadore-build-log-${{ github.run_attempt }}
-          path: build-log.txt
-          if-no-files-found: warn
-
-
-      - name: Upload APK
+      - name: UPLOAD APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: shad∅re-apk-€{{ github.run_attempt }}
+          name: SHADORE-V1-X-AZRIL-${{ github.run_id }}-${{ github.run_attempt }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: SAVE BUILD LOG
+        if: always()
+        run: |
+          echo "Build selesai dengan status: ${{ job.status }}" > build-log.txt
+
+      - name: UPLOAD BUILD LOG
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BUILD-LOG-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build-log.txt
+          if-no-files-found: warn
+          
