@@ -21,35 +21,32 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # Langkah Perbaikan: Otomatis membuat gradlew jika tidak ditemukan di root
       - name: Ensure Gradle Wrapper Exists
         run: |
           if [ ! -f "gradlew" ]; then
-            echo "gradlew tidak ditemukan di folder utama. Mencari di subfolder..."
             SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
             if [ -n "$SUBFOLDER" ]; then
-              echo "Menemukan proyek di folder: $SUBFOLDER"
               cd $SUBFOLDER
             else
-              echo "gradlew benar-benar tidak ada. Membuat wrapper baru..."
               gradle wrapper
             fi
           fi
           chmod +x gradlew
 
-      # Menjalankan build (mendukung jika proyek berada di folder utama maupun subfolder)
+      # Langkah Perbaikan: Menjalankan build dengan flag stacktrace agar memunculkan pesan eror yang jelas
       - name: Build APK with Gradle
         run: |
           if [ -f "gradlew" ]; then
-            ./gradlew assembleDebug
+            ./gradlew assembleDebug --stacktrace
           else
             SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
             cd $SUBFOLDER
-            ./gradlew assembleDebug
+            ./gradlew assembleDebug --stacktrace
           fi
 
-      # Mengunggah hasil APK
+      # Tetap unggah APK jika ada (berjaga-jaga jika sebenarnya build berhasil tapi ada warning dianggap eror)
       - name: Upload APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
