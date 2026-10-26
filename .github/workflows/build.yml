@@ -1,53 +1,30 @@
 name: Build Android APK
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout source
         uses: actions/checkout@v4
-
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: temurin
           java-version: '17'
-          cache: 'gradle'
-
-      - name: Ensure Gradle Wrapper Exists
-        run: |
-          if [ ! -f "gradlew" ]; then
-            SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
-            if [ -n "$SUBFOLDER" ]; then
-              cd $SUBFOLDER
-            else
-              gradle wrapper
-            fi
-          fi
-          chmod +x gradlew
-
-      # Perbaikan: Menangkap log ke file, lalu otomatis menampilkan baris eror utama jika gagal
-      - name: Build APK with Gradle
-        run: |
-          if [ -f "gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace > build_log.txt 2>&1 || { grep -i -E "error|caused by|failure" build_log.txt | head -n 30; exit 1; }
-          else
-            SUBFOLDER=$(find . -name "gradlew" -print -quit | sed 's/\/gradlew//')
-            cd $SUBFOLDER
-            ./gradlew assembleDebug --stacktrace > build_log.txt 2>&1 || { grep -i -E "error|caused by|failure" build_log.txt | head -n 30; exit 1; }
-          fi
-
-      - name: Upload APK Artifact
-        if: always()
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build debug APK
+        run: gradle assembleDebug
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: "**/build/outputs/apk/debug/*.apk"
+          name: shadore-voidcore-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           
