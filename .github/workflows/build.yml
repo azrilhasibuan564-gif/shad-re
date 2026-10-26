@@ -50,14 +50,12 @@ jobs:
           path: build-log.txt
           if-no-files-found: ignore
 
-          
+                
       
-      
-      - name: shadore-build-log-final
+      - name: Save build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: shadore-build-log
+          name: shadore-build-log-${{ github.run_attempt }}
           path: build-log.txt
           if-no-files-found: warn
-          continue-on-error: true
