@@ -23,8 +23,12 @@ jobs:
       - name: SET UP GRADLE
         uses: gradle/actions/setup-gradle@v4
 
+      
       - name: SET UP ANDROID SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          
 
       - name: INSTALL ANDROID SDK PACKAGES
         run: |
