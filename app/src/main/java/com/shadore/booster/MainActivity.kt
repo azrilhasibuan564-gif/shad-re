@@ -110,19 +110,35 @@ class MainActivity : ComponentActivity() {
         Shizuku.addBinderReceivedListener(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
 
-        setContent {
-            colorScheme = darkColorScheme(
-    primary = Color(0xFFB8323C),
-    onPrimary = Color.White,
-    secondary = Color(0xFFD05A63),
-    background = Color(0xFF0B0B0D),
-    onBackground = Color.White,
-    surface = Color(0xFF151518),
-    onSurface = Color.White,
-    surfaceVariant = Color(0xFF242428),
-    onSurfaceVariant = Color(0xFFC7C7CC),
-    outline = Color(0xFF38383D)
-)
+        
+setContent {
+    MaterialTheme(
+        colorScheme = darkColorScheme(
+            primary = Color(0xFFB8323C),
+            onPrimary = Color.White,
+            secondary = Color(0xFFD05A63),
+            background = Color(0xFF0B0B0D),
+            onBackground = Color.White,
+            surface = Color(0xFF151518),
+            onSurface = Color.White,
+            surfaceVariant = Color(0xFF242428),
+            onSurfaceVariant = Color(0xFFC7C7CC),
+            outline = Color(0xFF38383D)
+        )
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = bg
+        ) {
+            if (licenseValid) {
+                MainMenuPage()
+            } else {
+                ActivationPage()
+            }
+        }
+    }
+}
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = bg
