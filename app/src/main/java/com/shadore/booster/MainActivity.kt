@@ -168,10 +168,8 @@ private fun checkKey(input: String) {
         }
     }.start()
 }
-
-    }
-
-    private fun toggleBoost(on: Boolean) {
+    
+private fun toggleBoost(on: Boolean) {
         try {
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Shizuku.requestPermission(100)
