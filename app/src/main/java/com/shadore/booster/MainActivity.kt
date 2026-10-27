@@ -169,36 +169,6 @@ private fun checkKey(input: String) {
 }
     
 
-
-private fun toggleBoost(on: Boolean) {
-    if (!Shizuku.pingBinder()) {
-        Toast.makeText(
-            this,
-            "Shizuku belum berjalan. Buka Shizuku dan tekan Start.",
-            Toast.LENGTH_LONG
-        ).show()
-        return
-    }
-
-    try {
-        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            Shizuku.requestPermission(100)
-            Toast.makeText(
-                this,
-                "Izinkan SHADØRE di aplikasi Shizuku dulu.",
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-    } catch (e: Exception) {
-        Toast.makeText(
-            this,
-            "Gagal memeriksa izin Shizuku: ${e.message}",
-            Toast.LENGTH_LONG
-        ).show()
-        return
-    }
-
     isBoostOn = on
     getSharedPreferences("shadore", Context.MODE_PRIVATE)
         .edit()
