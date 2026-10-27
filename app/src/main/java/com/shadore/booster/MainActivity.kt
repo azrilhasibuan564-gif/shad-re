@@ -316,7 +316,7 @@ class MainActivity : ComponentActivity() {
                 val json = JSONObject(response)
 
                 valid = code in 200..299 &&
-                    json.optBoolean("valid", false)
+                    json.optBoolean("success", false)
 
                 message = if (valid) {
                     "Lisensi valid."
