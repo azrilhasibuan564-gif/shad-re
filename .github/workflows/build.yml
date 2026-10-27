@@ -1,3 +1,4 @@
+
 name: BUILD SHADORE V1 X AZRIL
 
 on:
@@ -25,12 +26,9 @@ jobs:
       - name: SET UP ANDROID SDK
         uses: android-actions/setup-android@v4
 
-
-      
       - name: BUILD APK
         id: build_apk
         continue-on-error: true
-        
         run: |
           set +e
           gradle assembleDebug --stacktrace --info > build-log.txt 2>&1
@@ -40,16 +38,14 @@ jobs:
           echo "===== AKHIR LOG ====="
           tail -n 80 build-log.txt
           exit $BUILD_STATUS
-          
 
       - name: UPLOAD BUILD LOG
         if: always()
         uses: actions/upload-artifact@v4
         with:
-       
-       name: BUILD-LOG-${{ github.run_id }}
-       path: build-log.txt
-       if-no-files-found: warn
+          name: BUILD-LOG-${{ github.run_id }}
+          path: build-log.txt
+          if-no-files-found: warn
 
       - name: CHECK BUILD RESULT
         if: always() && steps.build_apk.outcome == 'failure'
@@ -61,4 +57,5 @@ jobs:
         with:
           name: SHADORE-V1-X-AZRIL-${{ github.run_id }}
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error      
+          if-no-files-found: error
+          
