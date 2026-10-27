@@ -5,28 +5,18 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -55,7 +45,7 @@ class MainActivity : ComponentActivity() {
         Shizuku.OnBinderReceivedListener {
             runOnUiThread {
                 statusText = "Shizuku terhubung."
-                addLog("Binder Shizuku diterima.")
+                addLog("Koneksi Shizuku diterima.")
             }
         }
 
@@ -79,60 +69,76 @@ class MainActivity : ComponentActivity() {
             var licenseKey by remember { mutableStateOf("") }
 
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF080808)
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+
+                    // Background utama SHADØRE
+                    Image(
+                        painter = painterResource(
+                            id = R.drawable.shadore_bg
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Lapisan gelap agar teks terbaca
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.68f))
+                    )
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
+                            .statusBarsPadding()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 22.dp)
+                            .padding(vertical = 18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
                             text = "SHADØRE",
                             color = Color.White,
-                            fontSize = 34.sp,
+                            fontSize = 36.sp,
                             fontWeight = FontWeight.Black
                         )
 
-                        Spacer(Modifier.height(6.dp))
-
-                        Text(
-                            text = "GAME BOOSTER",
-                            color = Color(0xFFFF4545),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(Modifier.height(24.dp))
+                        Spacer(Modifier.height(28.dp))
 
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFF171717),
-                            shape = RoundedCornerShape(16.dp)
+                            color = Color(0xDD080D13),
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                Color(0xFF168DCE).copy(alpha = 0.75f)
+                            )
                         ) {
                             Column(Modifier.padding(18.dp)) {
                                 Text(
-                                    "STATUS SISTEM",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
+                                    text = "STATUS SISTEM",
+                                    color = Color(0xFF54C8FF),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 17.sp
                                 )
 
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(10.dp))
 
                                 Text(
-                                    statusText,
-                                    color = Color.LightGray,
+                                    text = statusText,
+                                    color = Color.White,
                                     fontSize = 13.sp
                                 )
 
-                                Spacer(Modifier.height(16.dp))
+                                Spacer(Modifier.height(18.dp))
 
                                 OutlinedTextField(
                                     value = licenseKey,
-                                    onValueChange = { licenseKey = it },
+                                    onValueChange = {
+                                        licenseKey = it
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     placeholder = {
                                         Text("Masukkan license key")
@@ -140,10 +146,22 @@ class MainActivity : ComponentActivity() {
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Ascii
+                                    ),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = Color(0xFF35BFFF),
+                                        unfocusedBorderColor =
+                                            Color(0xFF526575),
+                                        focusedPlaceholderColor =
+                                            Color.LightGray,
+                                        unfocusedPlaceholderColor =
+                                            Color.Gray,
+                                        cursorColor = Color(0xFF35BFFF)
                                     )
                                 )
 
-                                Spacer(Modifier.height(14.dp))
+                                Spacer(Modifier.height(16.dp))
 
                                 Button(
                                     onClick = {
@@ -167,20 +185,20 @@ class MainActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(52.dp),
+                                        .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isBoostOn)
-                                            Color(0xFF333333)
-                                        else
-                                            Color(0xFFFF3030)
+                                        containerColor = Color(0xFF087DB5)
                                     )
                                 ) {
                                     Text(
-                                        when {
-                                            isChecking -> "MEMERIKSA LISENSI..."
-                                            isBoostOn -> "MATIKAN BOOST"
-                                            else -> "NYALAKAN BOOST"
+                                        text = when {
+                                            isChecking ->
+                                                "MEMERIKSA LISENSI..."
+                                            isBoostOn ->
+                                                "MATIKAN BOOST"
+                                            else ->
+                                                "NYALAKAN BOOST"
                                         },
                                         color = Color.White,
                                         fontWeight = FontWeight.Bold
@@ -193,33 +211,29 @@ class MainActivity : ComponentActivity() {
 
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFF121212),
-                            shape = RoundedCornerShape(12.dp)
+                            color = Color(0xDD080D13),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                Color(0xFF168DCE).copy(alpha = 0.5f)
+                            )
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
-                                    "BUILD LOG",
-                                    color = Color(0xFFFF4545),
+                                    text = "BUILD LOG",
+                                    color = Color(0xFF54C8FF),
                                     fontWeight = FontWeight.Bold
                                 )
 
                                 Spacer(Modifier.height(8.dp))
 
                                 Text(
-                                    logText,
-                                    color = Color.LightGray,
+                                    text = logText,
+                                    color = Color.White,
                                     fontSize = 12.sp
                                 )
                             }
                         }
-
-                        Spacer(Modifier.height(16.dp))
-
-                        Text(
-                            "SHADØRE • Android",
-                            color = Color.Gray,
-                            fontSize = 11.sp
-                        )
                     }
                 }
             }
@@ -231,8 +245,8 @@ class MainActivity : ComponentActivity() {
             statusText = "Shizuku terhubung."
             addLog("Binder Shizuku tersedia.")
         } else {
-            statusText = "Shizuku belum terhubung ke aplikasi."
-            addLog("Periksa Shizuku dan izin aplikasi.")
+            statusText = "Shizuku belum terhubung."
+            addLog("Periksa status dan izin Shizuku.")
         }
     }
 
@@ -246,7 +260,7 @@ class MainActivity : ComponentActivity() {
 
         Thread {
             var valid = false
-            var message = "Validasi gagal."
+            var message = "Lisensi tidak valid."
 
             try {
                 val deviceId = Settings.Secure.getString(
@@ -255,7 +269,8 @@ class MainActivity : ComponentActivity() {
                 ) ?: "unknown-device"
 
                 val connection =
-                    URL(SUPABASE_URL).openConnection() as HttpURLConnection
+                    URL(SUPABASE_URL).openConnection()
+                        as HttpURLConnection
 
                 connection.requestMethod = "POST"
                 connection.connectTimeout = 15000
@@ -266,7 +281,14 @@ class MainActivity : ComponentActivity() {
                     "Content-Type",
                     "application/json"
                 )
-                connection.setRequestProperty("apikey", SUPABASE_KEY)
+                connection.setRequestProperty(
+                    "apikey",
+                    SUPABASE_KEY
+                )
+                connection.setRequestProperty(
+                    "Authorization",
+                    "Bearer $SUPABASE_KEY"
+                )
 
                 val body = JSONObject()
                     .put("action", "validate")
@@ -292,6 +314,7 @@ class MainActivity : ComponentActivity() {
                 connection.disconnect()
 
                 val json = JSONObject(response)
+
                 valid = code in 200..299 &&
                     json.optBoolean("valid", false)
 
@@ -300,11 +323,11 @@ class MainActivity : ComponentActivity() {
                 } else {
                     json.optString(
                         "error",
-                        "Lisensi tidak valid."
+                        "Lisensi ditolak oleh server."
                     )
                 }
             } catch (e: Exception) {
-                message = "Gagal menghubungi server. Periksa internet dan endpoint."
+                message = "Gagal menghubungi server. Periksa internet."
             }
 
             runOnUiThread {
@@ -373,7 +396,7 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             isBoostOn = false
             statusText = "Gagal menjalankan perintah."
-            addLog("Periksa izin Shizuku dan log build.")
+            addLog("Periksa izin Shizuku.")
         }
     }
 
