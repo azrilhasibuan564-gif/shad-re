@@ -1,4 +1,3 @@
-
 package with.shadore.booster
 
 import android.os.Bundle
@@ -6,16 +5,13 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -37,8 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
 import rikka.shizuku.Shizuku
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -52,24 +46,26 @@ class MainActivity : ComponentActivity() {
             "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
     }
 
-    private var statusText by mutableStateOf("Memeriksa koneksi Shizuku...")
-    private var logText by mutableStateOf("SHADØRE siap dijalankan.")
+    private var statusText by mutableStateOf("Memeriksa Shizuku...")
+    private var logText by mutableStateOf("SHADØRE siap.")
     private var isBoostOn by mutableStateOf(false)
     private var isChecking by mutableStateOf(false)
 
-    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
-        runOnUiThread {
-            statusText = "Koneksi Shizuku diterima."
-            addLog("Binder Shizuku terhubung.")
+    private val binderReceivedListener =
+        Shizuku.OnBinderReceivedListener {
+            runOnUiThread {
+                statusText = "Shizuku terhubung."
+                addLog("Binder Shizuku diterima.")
+            }
         }
-    }
 
-    private val binderDeadListener = Shizuku.OnBinderDeadListener {
-        runOnUiThread {
-            statusText = "Koneksi Shizuku terputus."
-            addLog("Shizuku terputus. Periksa aplikasi Shizuku.")
+    private val binderDeadListener =
+        Shizuku.OnBinderDeadListener {
+            runOnUiThread {
+                statusText = "Shizuku terputus."
+                addLog("Koneksi Shizuku terputus.")
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,7 +106,7 @@ class MainActivity : ComponentActivity() {
                             fontWeight = FontWeight.Bold
                         )
 
-                        Spacer(Modifier.height(28.dp))
+                        Spacer(Modifier.height(24.dp))
 
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
@@ -119,7 +115,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Column(Modifier.padding(18.dp)) {
                                 Text(
-                                    text = "STATUS SISTEM",
+                                    "STATUS SISTEM",
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -127,20 +123,12 @@ class MainActivity : ComponentActivity() {
                                 Spacer(Modifier.height(8.dp))
 
                                 Text(
-                                    text = statusText,
-                                    color = Color(0xFFBDBDBD),
+                                    statusText,
+                                    color = Color.LightGray,
                                     fontSize = 13.sp
                                 )
 
-                                Spacer(Modifier.height(12.dp))
-
-                                Text(
-                                    text = "Lisensi",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
-
-                                Spacer(Modifier.height(6.dp))
+                                Spacer(Modifier.height(16.dp))
 
                                 OutlinedTextField(
                                     value = licenseKey,
@@ -159,27 +147,20 @@ class MainActivity : ComponentActivity() {
 
                                 Button(
                                     onClick = {
-                                        if (licenseKey.isBlank()) {
+                                        if (isBoostOn) {
+                                            toggleBoost(false)
+                                        } else if (licenseKey.isBlank()) {
                                             Toast.makeText(
                                                 this@MainActivity,
-                                                "Masukkan license key terlebih dahulu.",
+                                                "Masukkan license key dahulu.",
                                                 Toast.LENGTH_SHORT
                                             ).show()
-                                        } else if (isChecking) {
-                                            Toast.makeText(
-                                                this@MainActivity,
-                                                "Validasi sedang berlangsung.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else {
-                                            validateLicense(licenseKey.trim()) {
-                                                valid ->
+                                        } else if (!isChecking) {
+                                            validateLicense(
+                                                licenseKey.trim()
+                                            ) { valid ->
                                                 if (valid) {
-                                                    if (isBoostOn) {
-                                                        toggleBoost(false)
-                                                    } else {
-                                                        toggleBoost(true)
-                                                    }
+                                                    toggleBoost(true)
                                                 }
                                             }
                                         }
@@ -187,16 +168,16 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(52.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (isBoostOn)
                                             Color(0xFF333333)
                                         else
                                             Color(0xFFFF3030)
-                                    ),
-                                    shape = RoundedCornerShape(12.dp)
+                                    )
                                 ) {
                                     Text(
-                                        text = when {
+                                        when {
                                             isChecking -> "MEMERIKSA LISENSI..."
                                             isBoostOn -> "MATIKAN BOOST"
                                             else -> "NYALAKAN BOOST"
@@ -217,7 +198,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "BUILD LOG",
+                                    "BUILD LOG",
                                     color = Color(0xFFFF4545),
                                     fontWeight = FontWeight.Bold
                                 )
@@ -225,8 +206,8 @@ class MainActivity : ComponentActivity() {
                                 Spacer(Modifier.height(8.dp))
 
                                 Text(
-                                    text = logText,
-                                    color = Color(0xFFCCCCCC),
+                                    logText,
+                                    color = Color.LightGray,
                                     fontSize = 12.sp
                                 )
                             }
@@ -235,8 +216,8 @@ class MainActivity : ComponentActivity() {
                         Spacer(Modifier.height(16.dp))
 
                         Text(
-                            text = "SHADØRE • Android",
-                            color = Color(0xFF777777),
+                            "SHADØRE • Android",
+                            color = Color.Gray,
                             fontSize = 11.sp
                         )
                     }
@@ -250,13 +231,13 @@ class MainActivity : ComponentActivity() {
             statusText = "Shizuku terhubung."
             addLog("Binder Shizuku tersedia.")
         } else {
-            statusText = "Binder Shizuku belum diterima aplikasi."
-            addLog("Buka Shizuku, tekan Start, lalu buka ulang SHADØRE.")
+            statusText = "Shizuku belum terhubung ke aplikasi."
+            addLog("Periksa Shizuku dan izin aplikasi.")
         }
     }
 
     private fun validateLicense(
-        licenseKey: String,
+        key: String,
         callback: (Boolean) -> Unit
     ) {
         isChecking = true
@@ -273,14 +254,14 @@ class MainActivity : ComponentActivity() {
                     Settings.Secure.ANDROID_ID
                 ) ?: "unknown-device"
 
-                val connection = (
+                val connection =
                     URL(SUPABASE_URL).openConnection() as HttpURLConnection
-                )
 
                 connection.requestMethod = "POST"
                 connection.connectTimeout = 15000
                 connection.readTimeout = 15000
                 connection.doOutput = true
+
                 connection.setRequestProperty(
                     "Content-Type",
                     "application/json"
@@ -289,38 +270,41 @@ class MainActivity : ComponentActivity() {
 
                 val body = JSONObject()
                     .put("action", "validate")
-                    .put("license_key", licenseKey)
+                    .put("license_key", key)
                     .put("device_id", deviceId)
                     .toString()
 
-                connection.outputStream.use { output ->
-                    output.write(body.toByteArray(Charsets.UTF_8))
+                connection.outputStream.use {
+                    it.write(body.toByteArray(Charsets.UTF_8))
                 }
 
-                val responseCode = connection.responseCode
-                val stream = if (responseCode in 200..299) {
+                val code = connection.responseCode
+                val stream = if (code in 200..299) {
                     connection.inputStream
                 } else {
                     connection.errorStream
                 }
 
-                val response = stream?.bufferedReader()?.use(
-                    BufferedReader::readText
-                ).orEmpty()
+                val response = stream?.bufferedReader()?.use {
+                    it.readText()
+                }.orEmpty()
 
                 connection.disconnect()
 
                 val json = JSONObject(response)
-                valid = responseCode in 200..299 &&
+                valid = code in 200..299 &&
                     json.optBoolean("valid", false)
 
                 message = if (valid) {
                     "Lisensi valid."
                 } else {
-                    json.optString("error", "Lisensi tidak valid.")
+                    json.optString(
+                        "error",
+                        "Lisensi tidak valid."
+                    )
                 }
             } catch (e: Exception) {
-                message = "Gagal menghubungi server: ${e.message ?: "periksa internet"}"
+                message = "Gagal menghubungi server. Periksa internet dan endpoint."
             }
 
             runOnUiThread {
@@ -335,11 +319,12 @@ class MainActivity : ComponentActivity() {
     private fun toggleBoost(on: Boolean) {
         if (!Shizuku.pingBinder()) {
             isBoostOn = false
-            statusText = "Shizuku belum terhubung ke aplikasi."
-            addLog("Boost dibatalkan: Binder Shizuku tidak tersedia.")
+            statusText = "Shizuku belum terhubung."
+            addLog("Boost dibatalkan: Binder tidak tersedia.")
+
             Toast.makeText(
                 this,
-                "Buka Shizuku, pastikan running, lalu buka ulang SHADØRE.",
+                "Periksa koneksi Shizuku.",
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -360,22 +345,24 @@ class MainActivity : ComponentActivity() {
                     null,
                     null
                 )
+
                 val exitCode = process.waitFor()
                 process.destroy()
 
                 if (exitCode != 0) {
                     throw IllegalStateException(
-                        "Perintah gagal dengan kode $exitCode"
+                        "Perintah gagal: kode $exitCode"
                     )
                 }
             }
 
             isBoostOn = on
             statusText = if (on) {
-                "Boost aktif: animasi dipercepat."
+                "Boost aktif: animasi 0.5x."
             } else {
-                "Boost mati: animasi dikembalikan."
+                "Boost mati: animasi 1.0x."
             }
+
             addLog(statusText)
 
             Toast.makeText(
@@ -385,8 +372,8 @@ class MainActivity : ComponentActivity() {
             ).show()
         } catch (e: Exception) {
             isBoostOn = false
-            statusText = "Gagal menjalankan perintah Shizuku."
-            addLog("Error: ${e.message ?: "tidak diketahui"}")
+            statusText = "Gagal menjalankan perintah."
+            addLog("Periksa izin Shizuku dan log build.")
         }
     }
 
