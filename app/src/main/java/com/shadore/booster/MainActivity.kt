@@ -170,8 +170,8 @@ private fun checkKey(input: String) {
 }
     
 
+
 private fun toggleBoost(on: Boolean) {
-    // Periksa apakah layanan Shizuku sedang berjalan
     if (!Shizuku.pingBinder()) {
         Toast.makeText(
             this,
@@ -180,6 +180,46 @@ private fun toggleBoost(on: Boolean) {
         ).show()
         return
     }
+
+    try {
+        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            Shizuku.requestPermission(100)
+            Toast.makeText(
+                this,
+                "Izinkan SHADØRE di aplikasi Shizuku dulu.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+    } catch (e: Exception) {
+        Toast.makeText(
+            this,
+            "Gagal memeriksa izin Shizuku: ${e.message}",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
+
+    isBoostOn = on
+    getSharedPreferences("shadore", Context.MODE_PRIVATE)
+        .edit()
+        .putBoolean("boost_on", on)
+        .apply()
+
+    Thread {
+        if (on) {
+            log("Shizuku terhubung. Memulai pengaturan boost.")
+            runCmd("settings put global window_animation_scale 0.5")
+            runCmd("settings put global transition_animation_scale 0.5")
+            runCmd("settings put global animator_duration_scale 0.5")
+        } else {
+            log("Memulihkan skala animasi.")
+            runCmd("settings put global window_animation_scale 1.0")
+            runCmd("settings put global transition_animation_scale 1.0")
+            runCmd("settings put global animator_duration_scale 1.0")
+        }
+    }.start()
+}
 
     // Periksa izin secara aman
     try {
