@@ -111,18 +111,18 @@ class MainActivity : ComponentActivity() {
         Shizuku.addBinderDeadListener(binderDeadListener)
 
         setContent {
-            MaterialTheme(
-    colorScheme = darkColorScheme(
-        primary = Color(0xFFB026FF),
-        secondary = Color(0xFF8A2BE2),
-        background = Color(0xFF08080C),
-        surface = Color(0xFF12121A),
-        onPrimary = Color.White,
-        onSecondary = Color.White,
-        onBackground = Color.White,
-        onSurface = Color.White
-    )
-) {
+            colorScheme = darkColorScheme(
+    primary = Color(0xFFB8323C),
+    onPrimary = Color.White,
+    secondary = Color(0xFFD05A63),
+    background = Color(0xFF0B0B0D),
+    onBackground = Color.White,
+    surface = Color(0xFF151518),
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF242428),
+    onSurfaceVariant = Color(0xFFC7C7CC),
+    outline = Color(0xFF38383D)
+)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = bg
