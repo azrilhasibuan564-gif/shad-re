@@ -499,4 +499,265 @@ class MainActivity : ComponentActivity() {
             }
 
             runOnUiThread {
-        
+    isChecking = false
+            statusText = message
+            addLog(message)
+            callback(valid)
+        }
+    }.start()
+}
+
+private fun addLog(message: String) {
+    val time = java.text.SimpleDateFormat(
+        "HH:mm:ss",
+        java.util.Locale.getDefault()
+    ).format(java.util.Date())
+
+    logText = "[$time] $message\n$logText"
+}
+
+private fun toggleBoost(on: Boolean) {
+    if (boostBusy) return
+
+    if (!Shizuku.pingBinder()) {
+        statusText = "Shizuku belum terhubung."
+        addLog("Boost dibatalkan: Shizuku tidak terhubung.")
+        return
+    }
+
+    if (Shizuku.checkSelfPermission() !=
+        PackageManager.PERMISSION_GRANTED
+    ) {
+        statusText = "Izin Shizuku belum diberikan."
+        addLog("Boost dibatalkan: izin Shizuku diperlukan.")
+        requestShizukuPermission()
+        return
+    }
+
+    boostBusy = true
+    statusText = if (on) {
+        "Mengaktifkan Boost..."
+    } else {
+        "Mematikan Boost..."
+    }
+
+    Thread {
+        var success = false
+        var message = ""
+
+        try {
+            val scale = if (on) "0.5" else "1.0"
+
+            val commands = listOf(
+                "settings put global window_animation_scale $scale",
+                "settings put global transition_animation_scale $scale",
+                "settings put global animator_duration_scale $scale"
+            )
+
+            for (command in commands) {
+                val output = runShell(command)
+                if (output.exitCode != 0) {
+                    throw Exception("Perintah gagal: $command")
+                }
+            }
+
+            val verify = runShell(
+                "settings get global window_animation_scale"
+            )
+
+            if (verify.exitCode != 0 ||
+                verify.output.trim() != scale
+            ) {
+                throw Exception("Verifikasi pengaturan gagal.")
+            }
+
+            success = true
+            message = if (on) {
+                "Boost aktif. Skala animasi diatur ke 0.5."
+            } else {
+                "Boost nonaktif. Skala animasi diatur ke 1.0."
+            }
+        } catch (e: Exception) {
+            message = "Boost gagal: ${e.message ?: "kesalahan sistem"}"
+        }
+
+        runOnUiThread {
+            boostBusy = false
+            isBoostOn = success && on
+            statusText = message
+            addLog(message)
+        }
+    }.start()
+}
+
+private data class ShellResult(
+    val exitCode: Int,
+    val output: String
+)
+
+private fun runShell(command: String): ShellResult {
+    val process = Shizuku.newProcess(
+        arrayOf("sh", "-c", command),
+        null,
+        null
+    )
+
+    val output = process.inputStream
+        .bufferedReader()
+        .use { it.readText() }
+
+    val error = process.errorStream
+        .bufferedReader()
+        .use { it.readText() }
+
+    val exitCode = process.waitFor()
+
+    return ShellResult(
+        exitCode = exitCode,
+        output = if (output.isNotBlank()) output else error
+    )
+}
+
+private fun loadPointerSpeed() {
+    if (mouseBusy) return
+
+    if (!checkShizukuReady()) return
+
+    mouseBusy = true
+    mouseStatus = "Membaca kecepatan pointer..."
+
+    Thread {
+        var value: Int? = null
+        var message: String
+
+        try {
+            val result = runShell(
+                "settings get system pointer_speed"
+            )
+
+            if (result.exitCode != 0) {
+                throw Exception("Gagal membaca pengaturan.")
+            }
+
+            value = result.output.trim().toIntOrNull()
+                ?: throw Exception("Nilai pointer tidak valid.")
+
+            if (value !in -7..7) {
+                throw Exception("Nilai di luar rentang yang didukung.")
+            }
+
+            message = "Nilai pointer berhasil dibaca."
+        } catch (e: Exception) {
+            message = "Gagal membaca: ${e.message}"
+        }
+
+        runOnUiThread {
+            mouseBusy = false
+            mouseStatus = message
+
+            if (value != null) {
+                pointerSpeed = value!!
+                if (originalPointerSpeed == null) {
+                    originalPointerSpeed = value
+                }
+                addLog("Kecepatan pointer terbaca: $value")
+            } else {
+                addLog(message)
+            }
+        }
+    }.start()
+}
+
+private fun savePointerSpeed() {
+    if (mouseBusy) return
+
+    if (!checkShizukuReady()) return
+
+    val target = pointerSpeed.coerceIn(-7, 7)
+    mouseBusy = true
+    mouseStatus = "Menerapkan nilai $target..."
+
+    Thread {
+        var success = false
+        var message: String
+
+        try {
+            val result = runShell(
+                "settings put system pointer_speed $target"
+            )
+
+            if (result.exitCode != 0) {
+                throw Exception("Perintah ditolak sistem.")
+            }
+
+            val verify = runShell(
+                "settings get system pointer_speed"
+            )
+
+            if (verify.exitCode != 0 ||
+                verify.output.trim().toIntOrNull() != target
+            ) {
+                throw Exception("Nilai tidak cocok saat diverifikasi.")
+            }
+
+            success = true
+            message = "Kecepatan pointer berhasil diatur ke $target."
+        } catch (e: Exception) {
+            message = "Gagal menerapkan: ${e.message}"
+        }
+
+        runOnUiThread {
+            mouseBusy = false
+            mouseStatus = message
+            addLog(message)
+
+            if (success) {
+                pointerSpeed = target
+            }
+        }
+    }.start()
+}
+
+private fun restorePointerSpeed() {
+    val original = originalPointerSpeed
+
+    if (original == null) {
+        mouseStatus = "Tekan BACA terlebih dahulu untuk menyimpan nilai awal."
+        addLog("Pemulihan dibatalkan: nilai awal belum dibaca.")
+        return
+    }
+
+    pointerSpeed = original
+    savePointerSpeed()
+}
+
+private fun checkShizukuReady(): Boolean {
+    if (!Shizuku.pingBinder()) {
+        mouseStatus = "Shizuku belum terhubung."
+        addLog("Operasi mouse dibatalkan: Shizuku tidak terhubung.")
+        return false
+    }
+
+    if (Shizuku.checkSelfPermission() !=
+        PackageManager.PERMISSION_GRANTED
+    ) {
+        mouseStatus = "Izin Shizuku belum diberikan."
+        addLog("Operasi mouse memerlukan izin Shizuku.")
+        requestShizukuPermission()
+        return false
+    }
+
+    return true
+}
+
+override fun onDestroy() {
+    super.onDestroy()
+
+    Shizuku.removeBinderReceivedListener(binderReceivedListener)
+    Shizuku.removeBinderDeadListener(binderDeadListener)
+    Shizuku.removeRequestPermissionResultListener(
+        requestPermissionResultListener
+    )
+}
+
+}
