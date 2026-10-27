@@ -1,4 +1,5 @@
 package with.shadore.booster
+
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -19,26 +20,38 @@ import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuRemoteProcess
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.security.MessageDigest
 
 class MainActivity : ComponentActivity() {
+
     private var logText by mutableStateOf("Ready.")
     private var isLoggedIn by mutableStateOf(false)
     private var deviceId by mutableStateOf("")
     private var isBoostOn by mutableStateOf(false)
-    private val SECRET = "shadore_secret_v2_2025_pro"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
+
+        deviceId = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ANDROID_ID
+        ) ?: "unknown"
+
         val prefs = getSharedPreferences("shadore", Context.MODE_PRIVATE)
-        isLoggedIn = prefs.getBoolean("logged_in", false) && prefs.getString("device_id", "") == deviceId
+        isLoggedIn = prefs.getBoolean("logged_in", false) &&
+            prefs.getString("device_id", "") == deviceId
         isBoostOn = prefs.getBoolean("boost_on", false)
 
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF0A0A0A)) {
-                    if (!isLoggedIn) LoginScreen() else BoosterScreen()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color(0xFF0A0A0A)
+                ) {
+                    if (!isLoggedIn) {
+                        LoginScreen()
+                    } else {
+                        BoosterScreen()
+                    }
                 }
             }
         }
@@ -47,20 +60,72 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun LoginScreen() {
         var keyInput by remember { mutableStateOf("") }
-        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text("shadØre", fontSize = 42.sp, fontWeight = FontWeight.Black, color = Color.White)
-            Text("DEVICE LOCKED", fontSize = 12.sp, color = Color(0xFFFF3B30), letterSpacing = 3.sp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                "shadØre",
+                fontSize = 42.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+
+            Text(
+                "DEVICE LOCKED",
+                fontSize = 12.sp,
+                color = Color(0xFFFF3B30),
+                letterSpacing = 3.sp
+            )
+
             Spacer(Modifier.height(16.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)), modifier = Modifier.fillMaxWidth()) {
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF1A1A1A)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Column(Modifier.padding(12.dp)) {
-                    Text("DEVICE ID:", color = Color.Gray, fontSize = 10.sp)
-                    Text(deviceId, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "DEVICE ID:",
+                        color = Color.Gray,
+                        fontSize = 10.sp
+                    )
+                    Text(
+                        deviceId,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
             Spacer(Modifier.height(20.dp))
-            OutlinedTextField(value = keyInput, onValueChange = { keyInput = it }, label = { Text("Key Aktivasi") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(
+                value = keyInput,
+                onValueChange = { keyInput = it },
+                label = { Text("Key Aktivasi") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
             Spacer(Modifier.height(12.dp))
-            Button(onClick = { checkKey(keyInput) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30)), modifier = Modifier.fillMaxWidth().height(56.dp)) {
+
+            Button(
+                onClick = { checkKey(keyInput) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF3B30)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
                 Text("ACTIVATE")
             }
         }
@@ -68,204 +133,312 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun BoosterScreen() {
-        Column(Modifier.fillMaxSize().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text("shadØre", fontSize = 40.sp, fontWeight = FontWeight.Black, color = Color.White)
-            Text(if(isBoostOn) "SYSTEM BOOST: ON" else "SYSTEM BOOST: OFF", color = if(isBoostOn) Color.Green else Color.Gray, fontSize = 12.sp, letterSpacing = 3.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                "shadØre",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+
+            Text(
+                if (isBoostOn) "SYSTEM BOOST: ON" else "SYSTEM BOOST: OFF",
+                color = if (isBoostOn) Color.Green else Color.Gray,
+                fontSize = 12.sp,
+                letterSpacing = 3.sp
+            )
+
             Spacer(Modifier.height(24.dp))
-            
-            // INI TOGGLE YANG NGARUH KE SISTEM
-            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)), modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF1A1A1A)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Column {
-                        Text("Shizuku Boost", fontWeight = FontWeight.Bold, color = Color.White)
-                        Text(if(isBoostOn) "Berpengaruh ke sistem" else "Mati", fontSize = 11.sp, color = Color.Gray)
+                        Text(
+                            "Shizuku Boost",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            if (isBoostOn) "Animasi dipercepat" else "Mati",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
                     }
-                    Switch(checked = isBoostOn, onCheckedChange = { toggleBoost(it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFFFF3B30), checkedTrackColor = Color(0x55FF3B30)))
+
+                    Switch(
+                        checked = isBoostOn,
+                        onCheckedChange = { toggleBoost(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color(0xFFFF3B30),
+                            checkedTrackColor = Color(0x55FF3B30)
+                        )
+                    )
                 }
             }
-            
+
             Spacer(Modifier.height(16.dp))
-            Text(logText, color = Color(0xFF00FF00), fontSize = 11.sp, modifier = Modifier.fillMaxWidth().height(200.dp))
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = { toggleBoost(!isBoostOn) }, colors = ButtonDefaults.buttonColors(containerColor = if(isBoostOn) Color.DarkGray else Color(0xFFFF3B30)), modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text(if(isBoostOn) "MATIKAN BOOST" else "NYALAKAN BOOST", fontWeight = FontWeight.Black)
-            }
-        }
-    }
 
-    
-private fun checkKey(input: String) {
-    val licenseKey = input.trim()
-
-    if (licenseKey.isEmpty()) {
-        Toast.makeText(this, "Masukkan key!", Toast.LENGTH_SHORT).show()
-        return
-    }
-
-    Thread {
-        var message = "Gagal memeriksa lisensi."
-        var activated = false
-
-        try {
-            val url = java.net.URL(
-                "https://elrvmholtuoxzbcdhant.supabase.co/functions/v1/clever-handler"
+            Text(
+                logText,
+                color = Color(0xFF00FF00),
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
             )
-            val conn = url.openConnection() as java.net.HttpURLConnection
 
-            conn.requestMethod = "POST"
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
-            conn.doOutput = true
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("apikey", "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B")
+            Spacer(Modifier.height(16.dp))
 
-            val body = org.json.JSONObject().apply {
-                put("action", "validate")
-                put("license_key", licenseKey)
-                put("device_id", deviceId)
-            }
-
-            conn.outputStream.use {
-                it.write(body.toString().toByteArray(Charsets.UTF_8))
-            }
-
-            val status = conn.responseCode
-            val stream = if (status in 200..299) conn.inputStream
-                         else conn.errorStream
-
-            val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-            val json = org.json.JSONObject(response)
-
-            activated = status in 200..299 &&
-                json.optBoolean("success", false)
-
-            message = if (activated) {
-                "Lisensi berhasil diaktifkan!"
-            } else {
-                json.optString("error")
-                    .ifBlank { json.optString("message") }
-                    .ifBlank { "Key ditolak (HTTP $status)" }
-            }
-
-            conn.disconnect()
-        } catch (e: Exception) {
-            message = "Koneksi gagal: ${e.message}"
-        }
-
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-
-            if (activated) {
-                getSharedPreferences("shadore", Context.MODE_PRIVATE)
-                    .edit()
-                    .putBoolean("logged_in", true)
-                    .putString("device_id", deviceId)
-                    .apply()
-
-                isLoggedIn = true
+            Button(
+                onClick = { toggleBoost(!isBoostOn) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isBoostOn) {
+                        Color.DarkGray
+                    } else {
+                        Color(0xFFFF3B30)
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text(
+                    if (isBoostOn) "MATIKAN BOOST" else "NYALAKAN BOOST",
+                    fontWeight = FontWeight.Black
+                )
             }
         }
-    }.start()
-}
-    
-
-    isBoostOn = on
-    getSharedPreferences("shadore", Context.MODE_PRIVATE)
-        .edit()
-        .putBoolean("boost_on", on)
-        .apply()
-
-    
-private fun toggleBoost(on: Boolean) {
-    if (!Shizuku.pingBinder()) {
-        Toast.makeText(
-            this,
-            "Shizuku belum berjalan. Tekan Start di Shizuku.",
-            Toast.LENGTH_LONG
-        ).show()
-        return
     }
 
-    try {
-        if (Shizuku.checkSelfPermission() !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            Shizuku.requestPermission(100)
+    private fun checkKey(input: String) {
+        val licenseKey = input.trim()
+
+        if (licenseKey.isEmpty()) {
             Toast.makeText(
                 this,
-                "Izinkan akses SHADØRE di Shizuku.",
+                "Masukkan key!",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        Thread {
+            var message = "Gagal memeriksa lisensi."
+            var activated = false
+            var connection: java.net.HttpURLConnection? = null
+
+            try {
+                val url = java.net.URL(
+                    "https://elrvmholtuoxzbcdhant.supabase.co/functions/v1/clever-handler"
+                )
+
+                connection = url.openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.doOutput = true
+
+                connection.setRequestProperty(
+                    "Content-Type",
+                    "application/json"
+                )
+                connection.setRequestProperty(
+                    "apikey",
+                    "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
+                )
+
+                val body = org.json.JSONObject().apply {
+                    put("action", "validate")
+                    put("license_key", licenseKey)
+                    put("device_id", deviceId)
+                }
+
+                connection.outputStream.use {
+                    it.write(body.toString().toByteArray(Charsets.UTF_8))
+                }
+
+                val status = connection.responseCode
+                val stream = if (status in 200..299) {
+                    connection.inputStream
+                } else {
+                    connection.errorStream
+                }
+
+                val response = stream?.bufferedReader()?.use {
+                    it.readText()
+                }.orEmpty()
+
+                val json = org.json.JSONObject(response)
+
+                activated = status in 200..299 &&
+                    json.optBoolean("success", false)
+
+                message = if (activated) {
+                    "Lisensi berhasil diaktifkan!"
+                } else {
+                    json.optString("error")
+                        .ifBlank { json.optString("message") }
+                        .ifBlank { "Key ditolak (HTTP $status)" }
+                }
+            } catch (e: Exception) {
+                message = "Koneksi gagal: ${e.message}"
+            } finally {
+                connection?.disconnect()
+            }
+
+            runOnUiThread {
+                Toast.makeText(
+                    this,
+                    message,
+                    Toast.LENGTH_LONG
+                ).show()
+
+                if (activated) {
+                    getSharedPreferences(
+                        "shadore",
+                        Context.MODE_PRIVATE
+                    ).edit()
+                        .putBoolean("logged_in", true)
+                        .putString("device_id", deviceId)
+                        .apply()
+
+                    isLoggedIn = true
+                }
+            }
+        }.start()
+    }
+
+    private fun toggleBoost(on: Boolean) {
+        if (!Shizuku.pingBinder()) {
+            Toast.makeText(
+                this,
+                "Shizuku belum berjalan. Buka Shizuku dan tekan Start.",
                 Toast.LENGTH_LONG
             ).show()
             return
         }
-    } catch (e: Exception) {
-        Toast.makeText(
-            this,
-            "Gagal memeriksa izin: ${e.message}",
-            Toast.LENGTH_LONG
-        ).show()
-        return
-    }
 
-    isBoostOn = on
+        try {
+            if (
+                Shizuku.checkSelfPermission() !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                Shizuku.requestPermission(100)
 
-    getSharedPreferences("shadore", Context.MODE_PRIVATE)
-        .edit()
-        .putBoolean("boost_on", on)
-        .apply()
-
-    Thread {
-        if (on) {
-            log("Memulai pengaturan boost.")
-            runCmd("settings put global window_animation_scale 0.5")
-            runCmd("settings put global transition_animation_scale 0.5")
-            runCmd("settings put global animator_duration_scale 0.5")
-        } else {
-            log("Memulihkan skala animasi.")
-            runCmd("settings put global window_animation_scale 1.0")
-            runCmd("settings put global transition_animation_scale 1.0")
-            runCmd("settings put global animator_duration_scale 1.0")
+                Toast.makeText(
+                    this,
+                    "Izinkan SHADØRE di aplikasi Shizuku.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                "Gagal memeriksa izin: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
+            return
         }
-    }.start()
-}
-
-
-
-        isBoostOn = on
-        getSharedPreferences("shadore", Context.MODE_PRIVATE).edit().putBoolean("boost_on", on).apply()
 
         Thread {
-            if (on) {
-                log(">>> SHADØRE ON - MINTA AKSES SHIZUKU & PENGARUHI SISTEM")
-                // INI YANG BIKIN NGARUH KE SISTEM VIA SHIZUKU
-                runCmd("cmd power set-fixed-performance-mode-enabled true")
-                runCmd("cmd thermalservice override-status 0") // matiin throttling
-                runCmd("settings put global window_animation_scale 0.5")
-                runCmd("settings put global transition_animation_scale 0.5")
-                runCmd("settings put global animator_duration_scale 0.5")
-                runCmd("cmd package bg-dexopt-job") // compile ulang biar ngebut
-                runCmd("dumpsys deviceidle whitelist +with.shadore.booster")
-                runCmd("am kill-all") // bersihin ram
-                log(">>> BOOST AKTIF! Performance mode ON, Thermal OFF")
-            } else {
-                log(">>> SHADØRE OFF - RESTORE SISTEM")
-                runCmd("cmd power set-fixed-performance-mode-enabled false")
-                runCmd("cmd thermalservice override-status -1")
-                runCmd("settings put global window_animation_scale 1.0")
-                runCmd("settings put global transition_animation_scale 1.0")
-                runCmd("settings put global animator_duration_scale 1.0")
-                log(">>> BOOST MATI, sistem balik normal")
+            try {
+                val commands = if (on) {
+                    listOf(
+                        "settings put global window_animation_scale 0.5",
+                        "settings put global transition_animation_scale 0.5",
+                        "settings put global animator_duration_scale 0.5"
+                    )
+                } else {
+                    listOf(
+                        "settings put global window_animation_scale 1.0",
+                        "settings put global transition_animation_scale 1.0",
+                        "settings put global animator_duration_scale 1.0"
+                    )
+                }
+
+                commands.forEach { runCmd(it) }
+
+                runOnUiThread {
+                    isBoostOn = on
+
+                    getSharedPreferences(
+                        "shadore",
+                        Context.MODE_PRIVATE
+                    ).edit()
+                        .putBoolean("boost_on", on)
+                        .apply()
+
+                    log(
+                        if (on) {
+                            "SHADØRE: Animasi berhasil diatur."
+                        } else {
+                            "SHADØRE: Animasi dikembalikan."
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                log("Gagal mengatur boost: ${e.message}")
             }
         }.start()
     }
 
     private fun runCmd(cmd: String) {
+        var process: ShizukuRemoteProcess? = null
+
         try {
-            val p: ShizukuRemoteProcess = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-            p.waitFor()
-            val r = BufferedReader(InputStreamReader(p.inputStream)).readText()
-            log("> $cmd\n$r")
-        } catch (e: Exception) { log("ERR: ${e.message}") }
+            process = Shizuku.newProcess(
+                arrayOf("sh", "-c", cmd),
+                null,
+                null
+            )
+
+            val output = BufferedReader(
+                InputStreamReader(process.inputStream)
+            ).use { it.readText() }
+
+            val error = BufferedReader(
+                InputStreamReader(process.errorStream)
+            ).use { it.readText() }
+
+            val exitCode = process.waitFor()
+
+            log(
+                "> $cmd\n" +
+                    output +
+                    error +
+                    "\nExit code: $exitCode"
+            )
+        } catch (e: Exception) {
+            log("ERR: ${e.message}")
+        } finally {
+            try {
+                process?.destroy()
+            } catch (_: Exception) {
+            }
+        }
     }
-    private fun log(s: String) { runOnUiThread { logText += "\n$s" } }
+
+    private fun log(message: String) {
+        runOnUiThread {
+            logText += "\n$message"
+        }
+    }
 }
