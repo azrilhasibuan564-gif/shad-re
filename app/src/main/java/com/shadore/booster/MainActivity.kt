@@ -3,13 +3,17 @@ package with.shadore.booster
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,11 +25,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.content.pm.PackageManager
 import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.math.roundToInt
+
+private val Red = Color(0xFFD94444)
+private val Panel = Color(0xF0101010)
 
 class MainActivity : ComponentActivity() {
 
@@ -35,29 +42,20 @@ class MainActivity : ComponentActivity() {
 
         private const val SUPABASE_KEY =
             "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
-    }
-    private fun requestShizukuPermission() {
-    if (!Shizuku.pingBinder()) {
-        statusText = "Shizuku belum terhubung."
-        addLog("Jalankan Shizuku terlebih dahulu.")
-        return
-    }
 
-    if (Shizuku.checkSelfPermission() ==
-        PackageManager.PERMISSION_GRANTED
-    ) {
-        statusText = "Izin Shizuku sudah diberikan."
-        addLog("Izin Shizuku tersedia.")
-    } else {
-        Shizuku.requestPermission(1001)
+        private const val SHIZUKU_REQUEST_CODE = 1001
     }
-    }
-
 
     private var statusText by mutableStateOf("Memeriksa Shizuku...")
     private var logText by mutableStateOf("SHADØRE siap.")
     private var isBoostOn by mutableStateOf(false)
     private var isChecking by mutableStateOf(false)
+    private var boostBusy by mutableStateOf(false)
+
+    private var pointerSpeed by mutableIntStateOf(0)
+    private var originalPointerSpeed: Int? = null
+    private var mouseBusy by mutableStateOf(false)
+    private var mouseStatus by mutableStateOf("Tekan BACA untuk membaca nilai sistem.")
 
     private val binderReceivedListener =
         Shizuku.OnBinderReceivedListener {
@@ -71,25 +69,26 @@ class MainActivity : ComponentActivity() {
         Shizuku.OnBinderDeadListener {
             runOnUiThread {
                 statusText = "Shizuku terputus."
+                isBoostOn = false
                 addLog("Koneksi Shizuku terputus.")
             }
         }
-        
+
     private val requestPermissionResultListener =
-    Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-        if (requestCode == 1001) {
-            runOnUiThread {
-                if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                    statusText = "Izin Shizuku diberikan."
-                    addLog("Izin Shizuku diberikan.")
-                } else {
-                    statusText = "Izin Shizuku ditolak."
-                    addLog("Izin Shizuku ditolak.")
+        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            if (requestCode == SHIZUKU_REQUEST_CODE) {
+                runOnUiThread {
+                    if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                        statusText = "Izin Shizuku diberikan."
+                        addLog("Izin Shizuku diberikan.")
+                    } else {
+                        statusText = "Izin Shizuku ditolak."
+                        addLog("Izin Shizuku ditolak.")
+                    }
                 }
             }
         }
-    }
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -98,30 +97,33 @@ class MainActivity : ComponentActivity() {
         Shizuku.addRequestPermissionResultListener(
             requestPermissionResultListener
         )
-        
+
         updateShizukuStatus()
 
         setContent {
             var licenseKey by remember { mutableStateOf("") }
 
-            MaterialTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    primary = Red,
+                    secondary = Red,
+                    background = Color.Black,
+                    surface = Panel
+                )
+            ) {
+                Box(Modifier.fillMaxSize()) {
 
-                    // Background utama SHADØRE
                     Image(
-                        painter = painterResource(
-                            id = R.drawable.shadore_bg
-                        ),
+                        painter = painterResource(R.drawable.shadore_bg),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
 
-                    // Lapisan gelap agar teks terbaca
                     Box(
-                        modifier = Modifier
+                        Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.68f))
+                            .background(Color.Black.copy(alpha = 0.82f))
                     )
 
                     Column(
@@ -129,33 +131,37 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .statusBarsPadding()
                             .navigationBarsPadding()
-                            .padding(horizontal = 22.dp)
-                            .padding(vertical = 18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp, vertical = 22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "SHADØRE",
+                            "SHADØRE",
                             color = Color.White,
-                            fontSize = 36.sp,
+                            fontSize = 34.sp,
                             fontWeight = FontWeight.Black
                         )
 
-                        Spacer(Modifier.height(28.dp))
+                        Text(
+                            "X AZRIL  •  SYSTEM OPTIMIZER",
+                            color = Red,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
+                        Spacer(Modifier.height(22.dp))
+
+                        // STATUS DAN LISENSI
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xDD080D13),
-                            shape = RoundedCornerShape(20.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                Color(0xFF168DCE).copy(alpha = 0.75f)
-                            )
+                            color = Panel,
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(1.dp, Red.copy(alpha = 0.7f))
                         ) {
                             Column(Modifier.padding(18.dp)) {
                                 Text(
-                                    text = "STATUS SISTEM",
-                                    color = Color(0xFF54C8FF),
+                                    "STATUS SISTEM",
+                                    color = Red,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 17.sp
                                 )
@@ -163,7 +169,7 @@ class MainActivity : ComponentActivity() {
                                 Spacer(Modifier.height(10.dp))
 
                                 Text(
-                                    text = statusText,
+                                    statusText,
                                     color = Color.White,
                                     fontSize = 13.sp
                                 )
@@ -172,117 +178,246 @@ class MainActivity : ComponentActivity() {
 
                                 OutlinedTextField(
                                     value = licenseKey,
-                                    onValueChange = {
-                                        licenseKey = it
-                                    },
+                                    onValueChange = { licenseKey = it },
                                     modifier = Modifier.fillMaxWidth(),
                                     placeholder = {
                                         Text("Masukkan license key")
                                     },
                                     singleLine = true,
+                                    enabled = !isChecking && !isBoostOn,
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Ascii
                                     ),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = Color.White,
                                         unfocusedTextColor = Color.White,
-                                        focusedBorderColor = Color(0xFF35BFFF),
-                                        unfocusedBorderColor =
-                                            Color(0xFF526575),
-                                        focusedPlaceholderColor =
-                                            Color.LightGray,
-                                        unfocusedPlaceholderColor =
-                                            Color.Gray,
-                                        cursorColor = Color(0xFF35BFFF)
+                                        focusedBorderColor = Red,
+                                        unfocusedBorderColor = Color.Gray,
+                                        cursorColor = Red
                                     )
                                 )
 
-                                Spacer(Modifier.height(16.dp))
+                                Spacer(Modifier.height(14.dp))
 
                                 Button(
                                     onClick = {
-                                        if (isBoostOn) {
-                                            toggleBoost(false)
-                                        } else if (licenseKey.isBlank()) {
-                                            Toast.makeText(
-                                                this@MainActivity,
-                                                "Masukkan license key dahulu.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else if (!isChecking) {
-                                            validateLicense(
+                                        when {
+                                            isChecking || boostBusy -> Unit
+
+                                            isBoostOn -> toggleBoost(false)
+
+                                            licenseKey.isBlank() -> {
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Masukkan license key dahulu.",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                            else -> validateLicense(
                                                 licenseKey.trim()
                                             ) { valid ->
-                                                if (valid) {
-                                                    toggleBoost(true)
-                                                }
+                                                if (valid) toggleBoost(true)
                                             }
                                         }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(54.dp),
+                                        .height(52.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF087DB5)
-                                    )
+                                        containerColor = Red
+                                    ),
+                                    enabled = !isChecking && !boostBusy
                                 ) {
                                     Text(
-                                        text = when {
-                                            isChecking ->
-                                                "MEMERIKSA LISENSI..."
-                                            isBoostOn ->
-                                                "MATIKAN BOOST"
-                                            else ->
-                                                "NYALAKAN BOOST"
+                                        when {
+                                            isChecking -> "MEMERIKSA LISENSI..."
+                                            boostBusy -> "MEMPROSES..."
+                                            isBoostOn -> "MATIKAN BOOST"
+                                            else -> "NYALAKAN BOOST"
                                         },
-                                        color = Color.White,
                                         fontWeight = FontWeight.Bold
                                     )
+                                }
+
+                                Spacer(Modifier.height(10.dp))
+
+                                OutlinedButton(
+                                    onClick = { requestShizukuPermission() },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("PERIKSA / MINTA IZIN SHIZUKU")
                                 }
                             }
                         }
 
                         Spacer(Modifier.height(18.dp))
 
+                        // MOUSE OTG
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xDD080D13),
+                            color = Panel,
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(1.dp, Red.copy(alpha = 0.7f))
+                        ) {
+                            Column(Modifier.padding(18.dp)) {
+                                Text(
+                                    "MOUSE OTG",
+                                    color = Red,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+
+                                Spacer(Modifier.height(6.dp))
+
+                                Text(
+                                    "Kecepatan pointer sistem",
+                                    color = Color.White
+                                )
+
+                                Slider(
+                                    value = pointerSpeed.toFloat(),
+                                    onValueChange = {
+                                        pointerSpeed = it.roundToInt()
+                                    },
+                                    valueRange = -7f..7f,
+                                    steps = 13,
+                                    enabled = !mouseBusy
+                                )
+
+                                Text(
+                                    "Nilai: $pointerSpeed  (rentang -7 hingga 7)",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                Text(
+                                    mouseStatus,
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+
+                                Spacer(Modifier.height(12.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = { loadPointerSpeed() },
+                                        enabled = !mouseBusy,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("BACA")
+                                    }
+
+                                    Button(
+                                        onClick = { savePointerSpeed() },
+                                        enabled = !mouseBusy,
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Red
+                                        )
+                                    ) {
+                                        Text("TERAPKAN")
+                                    }
+                                }
+
+                                Spacer(Modifier.height(8.dp))
+
+                                OutlinedButton(
+                                    onClick = { restorePointerSpeed() },
+                                    enabled = !mouseBusy,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("KEMBALIKAN NILAI AWAL")
+                                }
+
+                                Spacer(Modifier.height(8.dp))
+
+                                Text(
+                                    "Catatan: pengaturan ini mengubah kecepatan pointer sistem, " +
+                                        "bukan sensitivitas aim di dalam game. Dukungan bergantung " +
+                                        "pada versi Android dan perangkat.",
+                                    color = Color.Gray,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(18.dp))
+
+                        // BUILD LOG
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Panel,
                             shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                Color(0xFF168DCE).copy(alpha = 0.5f)
-                            )
+                            border = BorderStroke(1.dp, Color.DarkGray)
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "BUILD LOG",
-                                    color = Color(0xFF54C8FF),
+                                    "BUILD LOG",
+                                    color = Red,
                                     fontWeight = FontWeight.Bold
                                 )
 
                                 Spacer(Modifier.height(8.dp))
 
                                 Text(
-                                    text = logText,
+                                    logText,
                                     color = Color.White,
                                     fontSize = 12.sp
                                 )
                             }
                         }
+
+                        Spacer(Modifier.height(24.dp))
+
+                        Text(
+                            "SHADØRE X AZRIL",
+                            color = Color.Gray,
+                            fontSize = 11.sp
+                        )
                     }
                 }
             }
         }
     }
 
+    private fun requestShizukuPermission() {
+        if (!Shizuku.pingBinder()) {
+            statusText = "Shizuku belum terhubung."
+            addLog("Jalankan Shizuku terlebih dahulu.")
+            return
+        }
+
+        if (Shizuku.checkSelfPermission() ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            statusText = "Izin Shizuku sudah diberikan."
+            addLog("Izin Shizuku tersedia.")
+        } else {
+            Shizuku.requestPermission(SHIZUKU_REQUEST_CODE)
+        }
+    }
+
     private fun updateShizukuStatus() {
         if (Shizuku.pingBinder()) {
-            statusText = "Shizuku terhubung."
-            addLog("Binder Shizuku tersedia.")
+            statusText = if (
+                Shizuku.checkSelfPermission() ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                "Shizuku terhubung dan izin tersedia."
+            } else {
+                "Shizuku terhubung, izin belum diberikan."
+            }
+            addLog(statusText)
         } else {
             statusText = "Shizuku belum terhubung."
-            addLog("Periksa status dan izin Shizuku.")
+            addLog("Periksa status Shizuku.")
         }
     }
 
@@ -297,6 +432,7 @@ class MainActivity : ComponentActivity() {
         Thread {
             var valid = false
             var message = "Lisensi tidak valid."
+            var connection: HttpURLConnection? = null
 
             try {
                 val deviceId = Settings.Secure.getString(
@@ -304,9 +440,8 @@ class MainActivity : ComponentActivity() {
                     Settings.Secure.ANDROID_ID
                 ) ?: "unknown-device"
 
-                val connection =
-                    URL(SUPABASE_URL).openConnection()
-                        as HttpURLConnection
+                connection = URL(SUPABASE_URL)
+                    .openConnection() as HttpURLConnection
 
                 connection.requestMethod = "POST"
                 connection.connectTimeout = 15000
@@ -317,10 +452,7 @@ class MainActivity : ComponentActivity() {
                     "Content-Type",
                     "application/json"
                 )
-                connection.setRequestProperty(
-                    "apikey",
-                    SUPABASE_KEY
-                )
+                connection.setRequestProperty("apikey", SUPABASE_KEY)
                 connection.setRequestProperty(
                     "Authorization",
                     "Bearer $SUPABASE_KEY"
@@ -347,8 +479,6 @@ class MainActivity : ComponentActivity() {
                     it.readText()
                 }.orEmpty()
 
-                connection.disconnect()
-
                 val json = JSONObject(response)
 
                 valid = code in 200..299 &&
@@ -364,95 +494,9 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (e: Exception) {
                 message = "Gagal menghubungi server. Periksa internet."
+            } finally {
+                connection?.disconnect()
             }
 
             runOnUiThread {
-                isChecking = false
-                statusText = message
-                addLog(message)
-                callback(valid)
-            }
-        }.start()
-    }
-    private fun toggleBoost(on: Boolean) {
-    if (!Shizuku.pingBinder()) {
-        isBoostOn = false
-        statusText = "Shizuku belum terhubung."
-        addLog("Boost dibatalkan: Binder tidak tersedia.")
-
-        Toast.makeText(
-            this,
-            "Periksa koneksi Shizuku.",
-            Toast.LENGTH_LONG
-        ).show()
-        return
-    }
-
-    if (on && Shizuku.checkSelfPermission() !=
-        PackageManager.PERMISSION_GRANTED
-    ) {
-        requestShizukuPermission()
-        return
-    }
-
-    try {
         
-            val scale = if (on) "0.5" else "1.0"
-
-            val commands = arrayOf(
-                "settings put global window_animation_scale $scale",
-                "settings put global transition_animation_scale $scale",
-                "settings put global animator_duration_scale $scale"
-            )
-
-            for (command in commands) {
-                val process = Shizuku.newProcess(
-                    arrayOf("sh", "-c", command),
-                    null,
-                    null
-                )
-
-                val exitCode = process.waitFor()
-                process.destroy()
-
-                if (exitCode != 0) {
-                    throw IllegalStateException(
-                        "Perintah gagal: kode $exitCode"
-                    )
-                }
-            }
-
-            isBoostOn = on
-            statusText = if (on) {
-                "Boost aktif: animasi 0.5x."
-            } else {
-                "Boost mati: animasi 1.0x."
-            }
-
-            addLog(statusText)
-
-            Toast.makeText(
-                this,
-                statusText,
-                Toast.LENGTH_SHORT
-            ).show()
-        } catch (e: Exception) {
-            isBoostOn = false
-            statusText = "Gagal menjalankan perintah."
-            addLog("Periksa izin Shizuku.")
-        }
-    }
-
-    private fun addLog(message: String) {
-        logText = message
-    }
-
-        override fun onDestroy() {
-        Shizuku.removeBinderReceivedListener(binderReceivedListener)
-        Shizuku.removeBinderDeadListener(binderDeadListener)
-        Shizuku.removeRequestPermissionResultListener(
-            requestPermissionResultListener
-        )
-        super.onDestroy()
-    }
-}
