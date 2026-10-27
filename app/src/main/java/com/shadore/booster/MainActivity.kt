@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.pm.PackageManager
 import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.net.HttpURLConnection
@@ -35,6 +36,23 @@ class MainActivity : ComponentActivity() {
         private const val SUPABASE_KEY =
             "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
     }
+    private fun requestShizukuPermission() {
+    if (!Shizuku.pingBinder()) {
+        statusText = "Shizuku belum terhubung."
+        addLog("Jalankan Shizuku terlebih dahulu.")
+        return
+    }
+
+    if (Shizuku.checkSelfPermission() ==
+        PackageManager.PERMISSION_GRANTED
+    ) {
+        statusText = "Izin Shizuku sudah diberikan."
+        addLog("Izin Shizuku tersedia.")
+    } else {
+        Shizuku.requestPermission(1001)
+    }
+    }
+
 
     private var statusText by mutableStateOf("Memeriksa Shizuku...")
     private var logText by mutableStateOf("SHADØRE siap.")
@@ -56,13 +74,31 @@ class MainActivity : ComponentActivity() {
                 addLog("Koneksi Shizuku terputus.")
             }
         }
-
+        
+    private val requestPermissionResultListener =
+    Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+        if (requestCode == 1001) {
+            runOnUiThread {
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    statusText = "Izin Shizuku diberikan."
+                    addLog("Izin Shizuku diberikan.")
+                } else {
+                    statusText = "Izin Shizuku ditolak."
+                    addLog("Izin Shizuku ditolak.")
+                }
+            }
+        }
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
-
+        Shizuku.addRequestPermissionResultListener(
+            requestPermissionResultListener
+        )
+        
         updateShizukuStatus()
 
         setContent {
@@ -338,22 +374,29 @@ class MainActivity : ComponentActivity() {
             }
         }.start()
     }
-
     private fun toggleBoost(on: Boolean) {
-        if (!Shizuku.pingBinder()) {
-            isBoostOn = false
-            statusText = "Shizuku belum terhubung."
-            addLog("Boost dibatalkan: Binder tidak tersedia.")
+    if (!Shizuku.pingBinder()) {
+        isBoostOn = false
+        statusText = "Shizuku belum terhubung."
+        addLog("Boost dibatalkan: Binder tidak tersedia.")
 
-            Toast.makeText(
-                this,
-                "Periksa koneksi Shizuku.",
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
+        Toast.makeText(
+            this,
+            "Periksa koneksi Shizuku.",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
 
-        try {
+    if (on && Shizuku.checkSelfPermission() !=
+        PackageManager.PERMISSION_GRANTED
+    ) {
+        requestShizukuPermission()
+        return
+    }
+
+    try {
+        
             val scale = if (on) "0.5" else "1.0"
 
             val commands = arrayOf(
@@ -405,8 +448,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        Shizuku.removeBinderReceivedListener(binderReceivedListener)
-        Shizuku.removeBinderDeadListener(binderDeadListener)
-        super.onDestroy()
+    Shizuku.removeBinderReceivedListener(binderReceivedListener)
+    Shizuku.removeBinderDeadListener(binderDeadListener)
+    Shizuku.removeRequestPermissionResultListener(
+        requestPermissionResultListener
+    )
+    super.onDestroy()
     }
-}
