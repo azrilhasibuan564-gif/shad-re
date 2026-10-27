@@ -514,9 +514,16 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                val body = JSONObject()
-                    .put("license_key", key)
-                    .toString()
+                val deviceId = Settings.Secure.getString(
+    contentResolver,
+    Settings.Secure.ANDROID_ID
+)
+
+     val body = JSONObject()
+    .put("action", "validate")
+    .put("license_key", key.trim())
+    .put("device_id", deviceId)
+    .toString()
 
                 connection.outputStream.use {
                     it.write(body.toByteArray(Charsets.UTF_8))
@@ -552,9 +559,12 @@ class MainActivity : ComponentActivity() {
                         "Lisensi berhasil diverifikasi."
                     } else {
                         json.optString(
-                            "message",
-                            "Lisensi tidak valid. Periksa respons server."
-                        )
+    "error",
+    json.optString(
+        "message",
+        "Lisensi tidak valid. Periksa respons server."
+    )
+)
                     }
 
                     addLog(
