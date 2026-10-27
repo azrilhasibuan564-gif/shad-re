@@ -29,15 +29,17 @@ jobs:
       - name: BUILD APK
         id: build_apk
         continue-on-error: true
+        
         run: |
           set +e
-          gradle assembleDebug --stacktrace --info > build-log.txt 2>&1
+          gradle assembleDebug --stacktrace --console=plain > build-log.txt 2>&1
           BUILD_STATUS=$?
-          echo "===== ERROR GRADLE ====="
-          grep -n -E -i "e: |error:|FAILURE:|What went wrong|Caused by:|Unresolved reference|Could not resolve" build-log.txt | tail -n 60
-          echo "===== AKHIR LOG ====="
-          tail -n 80 build-log.txt
+          echo "===== ERROR PENTING ====="
+          grep -n -i -E "error|failed|failure|exception|unresolved reference|could not resolve|manifest merger" build-log.txt | tail -n 50
+          echo "===== 40 BARIS TERAKHIR ====="
+          tail -n 40 build-log.txt
           exit $BUILD_STATUS
+          
 
       - name: UPLOAD BUILD LOG
         if: always()
