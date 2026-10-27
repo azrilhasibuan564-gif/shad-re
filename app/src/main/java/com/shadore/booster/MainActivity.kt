@@ -94,20 +94,81 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun generateKey(devId: String): String {
-        val md = MessageDigest.getInstance("SHA-256")
-        val hash = md.digest((devId + SECRET).toByteArray()).joinToString("") { "%02x".format(it) }.uppercase()
-        return "SHADØRE-${hash.substring(0,4)}-${hash.substring(4,8)}-${hash.substring(8,12)}"
+    
+private fun checkKey(input: String) {
+    val licenseKey = input.trim()
+
+    if (licenseKey.isEmpty()) {
+        Toast.makeText(this, "Masukkan key!", Toast.LENGTH_SHORT).show()
+        return
     }
 
-    private fun checkKey(input: String) {
-        if (input.trim().uppercase() == generateKey(deviceId)) {
-            getSharedPreferences("shadore", Context.MODE_PRIVATE).edit().putBoolean("logged_in", true).putString("device_id", deviceId).apply()
-            isLoggedIn = true
-            Toast.makeText(this, "Activated!", Toast.LENGTH_SHORT).show()
-        } else {
-        Toast.makeText(this, "Key Salah! Hubungi seller. Device ID: $deviceId", Toast.LENGTH_LONG).show()
+    Thread {
+        var message = "Gagal memeriksa lisensi."
+        var activated = false
+
+        try {
+            val url = java.net.URL(
+                "https://elrvmholtuoxzbcdhant.supabase.co/functions/v1/clever-handler"
+            )
+            val conn = url.openConnection() as java.net.HttpURLConnection
+
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 15000
+            conn.readTimeout = 15000
+            conn.doOutput = true
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("apikey", "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B")
+
+            val body = org.json.JSONObject().apply {
+                put("action", "validate")
+                put("license_key", licenseKey)
+                put("device_id", deviceId)
+            }
+
+            conn.outputStream.use {
+                it.write(body.toString().toByteArray(Charsets.UTF_8))
+            }
+
+            val status = conn.responseCode
+            val stream = if (status in 200..299) conn.inputStream
+                         else conn.errorStream
+
+            val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            val json = org.json.JSONObject(response)
+
+            activated = status in 200..299 &&
+                json.optBoolean("success", false)
+
+            message = if (activated) {
+                "Lisensi berhasil diaktifkan!"
+            } else {
+                json.optString("error")
+                    .ifBlank { json.optString("message") }
+                    .ifBlank { "Key ditolak (HTTP $status)" }
+            }
+
+            conn.disconnect()
+        } catch (e: Exception) {
+            message = "Koneksi gagal: ${e.message}"
         }
+
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+            if (activated) {
+                getSharedPreferences("shadore", Context.MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("logged_in", true)
+                    .putString("device_id", deviceId)
+                    .apply()
+
+                isLoggedIn = true
+            }
+        }
+    }.start()
+}
+
     }
 
     private fun toggleBoost(on: Boolean) {
