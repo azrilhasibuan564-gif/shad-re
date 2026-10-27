@@ -1,5 +1,4 @@
 package with.shadore.booster
-
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -206,22 +205,17 @@ private fun toggleBoost(on: Boolean) {
         .putBoolean("boost_on", on)
         .apply()
 
-    Thread {
-        if (on) {
-            log("Shizuku terhubung. Memulai pengaturan boost.")
-            runCmd("settings put global window_animation_scale 0.5")
-            runCmd("settings put global transition_animation_scale 0.5")
-            runCmd("settings put global animator_duration_scale 0.5")
-        } else {
-            log("Memulihkan skala animasi.")
-            runCmd("settings put global window_animation_scale 1.0")
-            runCmd("settings put global transition_animation_scale 1.0")
-            runCmd("settings put global animator_duration_scale 1.0")
-        }
-    }.start()
-}
+    
+private fun toggleBoost(on: Boolean) {
+    if (!Shizuku.pingBinder()) {
+        Toast.makeText(
+            this,
+            "Shizuku belum berjalan. Tekan Start di Shizuku.",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
 
-    // Periksa izin secara aman
     try {
         if (Shizuku.checkSelfPermission() !=
             PackageManager.PERMISSION_GRANTED
@@ -229,7 +223,7 @@ private fun toggleBoost(on: Boolean) {
             Shizuku.requestPermission(100)
             Toast.makeText(
                 this,
-                "Izinkan akses Shizuku untuk SHADØRE.",
+                "Izinkan akses SHADØRE di Shizuku.",
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -237,13 +231,14 @@ private fun toggleBoost(on: Boolean) {
     } catch (e: Exception) {
         Toast.makeText(
             this,
-            "Gagal memeriksa izin Shizuku: ${e.message}",
+            "Gagal memeriksa izin: ${e.message}",
             Toast.LENGTH_LONG
         ).show()
         return
     }
 
     isBoostOn = on
+
     getSharedPreferences("shadore", Context.MODE_PRIVATE)
         .edit()
         .putBoolean("boost_on", on)
@@ -251,7 +246,7 @@ private fun toggleBoost(on: Boolean) {
 
     Thread {
         if (on) {
-            log("Shizuku terhubung. Memulai pengaturan boost.")
+            log("Memulai pengaturan boost.")
             runCmd("settings put global window_animation_scale 0.5")
             runCmd("settings put global transition_animation_scale 0.5")
             runCmd("settings put global animator_duration_scale 0.5")
@@ -263,6 +258,7 @@ private fun toggleBoost(on: Boolean) {
         }
     }.start()
 }
+
 
 
         isBoostOn = on
