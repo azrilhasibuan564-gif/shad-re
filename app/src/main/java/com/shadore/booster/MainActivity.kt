@@ -447,11 +447,12 @@ class MainActivity : ComponentActivity() {
         logText = message
     }
 
-    override fun onDestroy() {
-    Shizuku.removeBinderReceivedListener(binderReceivedListener)
-    Shizuku.removeBinderDeadListener(binderDeadListener)
-    Shizuku.removeRequestPermissionResultListener(
-        requestPermissionResultListener
-    )
-    super.onDestroy()
+        override fun onDestroy() {
+        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+        Shizuku.removeBinderDeadListener(binderDeadListener)
+        Shizuku.removeRequestPermissionResultListener(
+            requestPermissionResultListener
+        )
+        super.onDestroy()
     }
+}
