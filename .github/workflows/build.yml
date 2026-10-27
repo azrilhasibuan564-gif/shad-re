@@ -29,8 +29,7 @@ jobs:
 
       - name: BUILD APK
         run: |
-          gradle assembleDebug --stacktrace --info > build-log.txt 2>&1
-
+          gradle assembleDebug --stacktrace --info
       - name: UPLOAD APK
         if: success()
         uses: actions/upload-artifact@v4
