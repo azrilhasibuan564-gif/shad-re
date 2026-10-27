@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08090d">
-  <title>SHADORE License</title>
+  <title>SHADORE License Generator</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -44,7 +44,7 @@
       text-align: center;
       color: #9294a5;
       font-size: 13px;
-      margin: 10px 0 28px;
+      margin: 12px 0 26px;
     }
 
     label {
@@ -100,7 +100,8 @@
     .key {
       font-weight: bold;
       color: #c4b5fd;
-      margin-top: 8px;
+      margin-top: 10px;
+      line-height: 1.5;
     }
 
     .message {
@@ -111,8 +112,14 @@
       color: #c9cad5;
     }
 
-    .hidden { display: none; }
-    .small { color: #777b8d; font-size: 11px; text-align: center; margin-top: 22px; }
+    .hidden { display: none !important; }
+
+    .small {
+      color: #777b8d;
+      font-size: 11px;
+      text-align: center;
+      margin-top: 22px;
+    }
   </style>
 </head>
 
@@ -122,19 +129,19 @@
     <div class="subtitle">LICENSE GENERATOR · ADMIN PANEL</div>
 
     <section id="loginSection">
-      <label for="email">Email admin Supabase</label>
+      <label for="email">Email admin</label>
       <input id="email" type="email" autocomplete="username"
-             placeholder="Email admin">
+        placeholder="Email Supabase">
 
       <label for="password">Password</label>
       <input id="password" type="password"
-             autocomplete="current-password" placeholder="Password">
+        autocomplete="current-password" placeholder="Password">
 
       <button id="loginButton" type="button">LOGIN ADMIN</button>
     </section>
 
     <section id="adminSection" class="hidden">
-      <div class="subtitle">Login berhasil. Panel admin aktif.</div>
+      <p id="accountLabel" class="subtitle">Panel admin</p>
 
       <button id="generateButton" type="button">
         GENERATE LICENSE KEY
@@ -158,152 +165,148 @@
   </main>
 
   <script>
-    const PROJECT_URL = "https://elrvmholtuoxzbcdhant.supabase.co";
+    const PROJECT_URL =
+      "https://elrvmholtuoxzbcdhant.supabase.co";
 
-    const PUBLISHABLE_KEY = "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B";
+    const PUBLISHABLE_KEY =
+      "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B";
 
-    const message = document.getElementById("message");
-    const loginSection = document.getElementById("loginSection");
-    const adminSection = document.getElementById("adminSection");
-    const result = document.getElementById("result");
-    const licenseKey = document.getElementById("licenseKey");
-    const loginButton = document.getElementById("loginButton");
-    const generateButton = document.getElementById("generateButton");
+    // Nama Edge Function yang kamu berikan.
+    const FUNCTION_NAME = "clever-handler";
 
-    let supabaseClient;
+    const $ = (id) => document.getElementById(id);
 
-    function showMessage(text) {
-      message.textContent = text;
+    const client = window.supabase.createClient(
+      PROJECT_URL,
+      PUBLISHABLE_KEY
+    );
+
+    function message(text) {
+      $("message").textContent = text;
     }
 
-    function showAdmin(isLoggedIn) {
-      loginSection.classList.toggle("hidden", isLoggedIn);
-      adminSection.classList.toggle("hidden", !isLoggedIn);
-    }
+    function showAdmin(isLoggedIn, email = "") {
+      $("loginSection").classList.toggle("hidden", isLoggedIn);
+      $("adminSection").classList.toggle("hidden", !isLoggedIn);
 
-    function configurationValid() {
-      return PROJECT_URL.startsWith("https://") &&
-        !PROJECT_URL.includes("YOUR_PROJECT_ID") &&
-        PUBLISHABLE_KEY.startsWith("sb_publishable_") &&
-        !PUBLISHABLE_KEY.includes("PASTE_YOUR");
-    }
-
-    if (!configurationValid()) {
-      showMessage(
-        "Konfigurasi belum lengkap. Isi PROJECT_URL dan PUBLISHABLE_KEY terlebih dahulu."
-      );
-      loginButton.disabled = true;
-    } else {
-      supabaseClient = window.supabase.createClient(
-        PROJECT_URL,
-        PUBLISHABLE_KEY
-      );
-
-      initializeSession();
-    }
-
-    async function initializeSession() {
-      const { data, error } = await supabaseClient.auth.getSession();
-
-      if (error) {
-        showMessage("Gagal memeriksa sesi login.");
-        return;
+      if (isLoggedIn) {
+        $("accountLabel").textContent = "Login sebagai " + email;
       }
-
-      showAdmin(!!data.session);
     }
 
-    loginButton.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        showMessage("Isi email dan password terlebih dahulu.");
-        return;
-      }
-
-      loginButton.disabled = true;
-      showMessage("Sedang login...");
-
+    async function checkSession() {
       try {
-        const { data, error } =
-          await supabaseClient.auth.signInWithPassword({
-            email,
-            password
-          });
+        const { data, error } = await client.auth.getSession();
 
         if (error) throw error;
 
-        if (!data.session) {
-          throw new Error("Sesi login tidak ditemukan.");
-        }
-
-        showAdmin(true);
-        showMessage("Login berhasil.");
+        showAdmin(
+          !!data.session,
+          data.session?.user?.email || ""
+        );
       } catch (error) {
-        showMessage("Login gagal: " + error.message);
+        message("Gagal memeriksa sesi: " + error.message);
+      }
+    }
+
+    $("loginButton").addEventListener("click", async () => {
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      if (!email || !password) {
+        message("Isi email dan password terlebih dahulu.");
+        return;
+      }
+
+      $("loginButton").disabled = true;
+      message("Sedang login...");
+
+      try {
+        const { data, error } = await client.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+
+        showAdmin(true, data.user?.email || email);
+        message("Login berhasil.");
+      } catch (error) {
+        message("Login gagal: " + error.message);
       } finally {
-        loginButton.disabled = false;
+        $("loginButton").disabled = false;
       }
     });
 
-    generateButton.addEventListener("click", async () => {
-      generateButton.disabled = true;
-      showMessage("Sedang membuat license key...");
-      result.classList.add("hidden");
+    $("generateButton").addEventListener("click", async () => {
+      $("generateButton").disabled = true;
+      $("result").classList.add("hidden");
+      message("Meminta server membuat lisensi...");
 
       try {
         const { data: sessionData, error: sessionError } =
-          await supabaseClient.auth.getSession();
+          await client.auth.getSession();
 
         if (sessionError) throw sessionError;
+
         if (!sessionData.session) {
-          throw new Error("Silakan login kembali.");
+          throw new Error("Sesi habis. Silakan login kembali.");
         }
 
-        const { data, error } =
-          await supabaseClient.functions.invoke("license", {
+        const { data, error } = await client.functions.invoke(
+          FUNCTION_NAME,
+          {
             body: { action: "generate" }
-          });
+          }
+        );
 
-        if (error) throw error;
-        if (!data || !data.success || !data.license_key) {
-          throw new Error(data?.error || "Gagal membuat lisensi.");
+        if (error) {
+          throw new Error(
+            error.message || "Edge Function gagal dipanggil."
+          );
         }
 
-        licenseKey.textContent = data.license_key;
-        result.classList.remove("hidden");
-        showMessage("License key berhasil dibuat.");
+        if (!data || !data.success || !data.license_key) {
+          throw new Error(
+            data?.error || "Server tidak mengembalikan license key."
+          );
+        }
+
+        $("licenseKey").textContent = data.license_key;
+        $("result").classList.remove("hidden");
+        message("License key berhasil dibuat.");
       } catch (error) {
-        showMessage(
-          "Gagal membuat lisensi: " + (error.message || "Unknown error")
-        );
+        message("Gagal membuat lisensi: " + error.message);
       } finally {
-        generateButton.disabled = false;
+        $("generateButton").disabled = false;
       }
     });
 
-    document.getElementById("copyButton").addEventListener("click", async () => {
+    $("copyButton").addEventListener("click", async () => {
+      const key = $("licenseKey").textContent;
+
       try {
-        await navigator.clipboard.writeText(licenseKey.textContent);
-        showMessage("License key berhasil disalin.");
+        await navigator.clipboard.writeText(key);
+        message("License key berhasil disalin.");
       } catch {
-        showMessage("Gagal menyalin. Salin license key secara manual.");
+        message("Clipboard gagal. Salin key secara manual.");
       }
     });
 
-    document.getElementById("logoutButton").addEventListener("click", async () => {
-      const { error } = await supabaseClient.auth.signOut();
+    $("logoutButton").addEventListener("click", async () => {
+      const { error } = await client.auth.signOut();
 
       if (error) {
-        showMessage("Logout gagal: " + error.message);
+        message("Logout gagal: " + error.message);
         return;
       }
 
-      result.classList.add("hidden");
+      $("result").classList.add("hidden");
       showAdmin(false);
-      showMessage("Kamu sudah logout.");
+      message("Kamu sudah logout.");
     });
+
+    checkSession();
   </script>
 </body>
 </html>
