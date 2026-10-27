@@ -169,17 +169,61 @@ private fun checkKey(input: String) {
     }.start()
 }
     
+
 private fun toggleBoost(on: Boolean) {
-        try {
-            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                Shizuku.requestPermission(100)
-                Toast.makeText(this, "Allow Shizuku dulu!", Toast.LENGTH_SHORT).show()
-                return
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Shizuku belum terinstall!", Toast.LENGTH_SHORT).show()
+    // Periksa apakah layanan Shizuku sedang berjalan
+    if (!Shizuku.pingBinder()) {
+        Toast.makeText(
+            this,
+            "Shizuku belum berjalan. Buka Shizuku dan tekan Start.",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
+
+    // Periksa izin secara aman
+    try {
+        if (Shizuku.checkSelfPermission() !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            Shizuku.requestPermission(100)
+            Toast.makeText(
+                this,
+                "Izinkan akses Shizuku untuk SHADØRE.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
+    } catch (e: Exception) {
+        Toast.makeText(
+            this,
+            "Gagal memeriksa izin Shizuku: ${e.message}",
+            Toast.LENGTH_LONG
+        ).show()
+        return
+    }
+
+    isBoostOn = on
+    getSharedPreferences("shadore", Context.MODE_PRIVATE)
+        .edit()
+        .putBoolean("boost_on", on)
+        .apply()
+
+    Thread {
+        if (on) {
+            log("Shizuku terhubung. Memulai pengaturan boost.")
+            runCmd("settings put global window_animation_scale 0.5")
+            runCmd("settings put global transition_animation_scale 0.5")
+            runCmd("settings put global animator_duration_scale 0.5")
+        } else {
+            log("Memulihkan skala animasi.")
+            runCmd("settings put global window_animation_scale 1.0")
+            runCmd("settings put global transition_animation_scale 1.0")
+            runCmd("settings put global animator_duration_scale 1.0")
+        }
+    }.start()
+}
+
 
         isBoostOn = on
         getSharedPreferences("shadore", Context.MODE_PRIVATE).edit().putBoolean("boost_on", on).apply()
