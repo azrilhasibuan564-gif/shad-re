@@ -112,12 +112,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = neon,
-                    background = bg,
-                    surface = panel
-                )
-            ) {
+    colorScheme = darkColorScheme(
+        primary = Color(0xFFB026FF),
+        secondary = Color(0xFF8A2BE2),
+        background = Color(0xFF08080C),
+        surface = Color(0xFF12121A),
+        onPrimary = Color.White,
+        onSecondary = Color.White,
+        onBackground = Color.White,
+        onSurface = Color.White
+    )
+) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = bg
