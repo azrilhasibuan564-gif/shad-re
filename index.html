@@ -1,192 +1,311 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08090d">
   <title>SHADORE License</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
+      padding: 20px;
       display: grid;
       place-items: center;
-      padding: 20px;
       background: #08090d;
-      color: #f5f5f5;
+      color: #f5f5f7;
       font-family: Arial, sans-serif;
     }
+
     .panel {
       width: 100%;
-      max-width: 390px;
+      max-width: 420px;
       padding: 28px;
-      background: #11131a;
-      border: 1px solid #292d39;
+      border: 1px solid #292b36;
       border-radius: 18px;
+      background: #11121a;
+      box-shadow: 0 18px 60px #0007;
     }
-    h1 { text-align: center; letter-spacing: 4px; }
-    p { color: #a5a8b5; text-align: center; }
-    input, button {
+
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9294a5;
+      font-size: 13px;
+      margin: 10px 0 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin: 15px 0 7px;
+      color: #c9cad5;
+    }
+
+    input {
       width: 100%;
       padding: 13px;
-      margin-top: 12px;
+      border: 1px solid #333542;
       border-radius: 9px;
-      font-size: 15px;
-    }
-    input {
-      background: #090b10;
+      background: #090a10;
       color: white;
-      border: 1px solid #353947;
+      outline: none;
     }
+
+    input:focus { border-color: #a78bfa; }
+
     button {
-      background: #e8e8ed;
-      color: #101116;
+      width: 100%;
+      padding: 13px;
+      margin-top: 14px;
       border: 0;
-      font-weight: bold;
+      border-radius: 9px;
+      background: #a78bfa;
+      color: #11101a;
+      font-weight: 700;
       cursor: pointer;
     }
-    button:disabled { opacity: .5; }
-    #status {
-      margin-top: 16px;
-      overflow-wrap: anywhere;
-      font-size: 14px;
-      text-align: center;
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
     }
-    #admin { display: none; }
+
+    .secondary {
+      background: #252633;
+      color: white;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 9px;
+      background: #090a10;
+      border: 1px solid #333542;
+      overflow-wrap: anywhere;
+    }
+
+    .key {
+      font-weight: bold;
+      color: #c4b5fd;
+      margin-top: 8px;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      color: #c9cad5;
+    }
+
+    .hidden { display: none; }
+    .small { color: #777b8d; font-size: 11px; text-align: center; margin-top: 22px; }
   </style>
 </head>
+
 <body>
   <main class="panel">
-    <h1>SHADØRE</h1>
-    <p>License Key Management</p>
+    <div class="logo">SHADØRE</div>
+    <div class="subtitle">LICENSE GENERATOR · ADMIN PANEL</div>
 
-    <section id="login">
-      <input id="email" type="email"
-        placeholder="Email admin" autocomplete="username">
+    <section id="loginSection">
+      <label for="email">Email admin Supabase</label>
+      <input id="email" type="email" autocomplete="username"
+             placeholder="Email admin">
+
+      <label for="password">Password</label>
       <input id="password" type="password"
-        placeholder="Password" autocomplete="current-password">
-      <button id="loginBtn">LOGIN ADMIN</button>
+             autocomplete="current-password" placeholder="Password">
+
+      <button id="loginButton" type="button">LOGIN ADMIN</button>
     </section>
 
-    <section id="admin">
-      <p>Admin Dashboard</p>
-      <button id="generateBtn">GENERATE LICENSE KEY</button>
-      <button id="logoutBtn">LOGOUT</button>
+    <section id="adminSection" class="hidden">
+      <div class="subtitle">Login berhasil. Panel admin aktif.</div>
+
+      <button id="generateButton" type="button">
+        GENERATE LICENSE KEY
+      </button>
+
+      <div id="result" class="result hidden">
+        <div>License key:</div>
+        <div id="licenseKey" class="key"></div>
+        <button id="copyButton" class="secondary" type="button">
+          SALIN LICENSE
+        </button>
+      </div>
+
+      <button id="logoutButton" class="secondary" type="button">
+        LOGOUT
+      </button>
     </section>
 
-    <div id="status" role="status"></div>
+    <div id="message" class="message" role="status"></div>
+    <div class="small">SHADORE LICENSE SYSTEM</div>
   </main>
 
-  <script type="module">
-    import { createClient } from
-  "https://esm.sh/@supabase/supabase-js@2.43.4";
-    const SUPABASE_URL =
-      "https://elrvmholtuoxzbcdhant.supabase.co";
+  <script>
+    // GANTI dengan URL project Supabase kamu.
+    const PROJECT_URL = "https://YOUR_PROJECT_ID.supabase.co";
 
-    const SUPABASE_PUBLISHABLE_KEY =
-  "TEMPEL_PUBLISHABLE_KEY_KAMU_DI_SINI";
+    // Gunakan publishable key (sb_publishable_...), bukan secret key.
+    const PUBLISHABLE_KEY = "PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE";
 
-const FUNCTION_URL =
-  SUPABASE_URL + "/functions/v1/clever-handler";
+    const message = document.getElementById("message");
+    const loginSection = document.getElementById("loginSection");
+    const adminSection = document.getElementById("adminSection");
+    const result = document.getElementById("result");
+    const licenseKey = document.getElementById("licenseKey");
+    const loginButton = document.getElementById("loginButton");
+    const generateButton = document.getElementById("generateButton");
 
-    const status = document.getElementById("status");
-    const loginSection = document.getElementById("login");
-    const adminSection = document.getElementById("admin");
-    const loginBtn = document.getElementById("loginBtn");
-    const generateBtn = document.getElementById("generateBtn");
+    let supabaseClient;
 
-    if (SUPABASE_PUBLISHABLE_KEY === "ISI_PUBLISHABLE_KEY") {
-      status.textContent =
-        "Konfigurasi belum selesai: isi publishable key Supabase.";
-      loginBtn.disabled = true;
+    function showMessage(text) {
+      message.textContent = text;
+    }
+
+    function showAdmin(isLoggedIn) {
+      loginSection.classList.toggle("hidden", isLoggedIn);
+      adminSection.classList.toggle("hidden", !isLoggedIn);
+    }
+
+    function configurationValid() {
+      return PROJECT_URL.startsWith("https://") &&
+        !PROJECT_URL.includes("YOUR_PROJECT_ID") &&
+        PUBLISHABLE_KEY.startsWith("sb_publishable_") &&
+        !PUBLISHABLE_KEY.includes("PASTE_YOUR");
+    }
+
+    if (!configurationValid()) {
+      showMessage(
+        "Konfigurasi belum lengkap. Isi PROJECT_URL dan PUBLISHABLE_KEY terlebih dahulu."
+      );
+      loginButton.disabled = true;
     } else {
-      const supabase = createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
+      supabaseClient = window.supabase.createClient(
+        PROJECT_URL,
+        PUBLISHABLE_KEY
       );
 
-      async function updateSession() {
-        const { data } = await supabase.auth.getSession();
-        const session = data.session;
-        loginSection.style.display = session ? "none" : "block";
-        adminSection.style.display = session ? "block" : "none";
+      initializeSession();
+    }
+
+    async function initializeSession() {
+      const { data, error } = await supabaseClient.auth.getSession();
+
+      if (error) {
+        showMessage("Gagal memeriksa sesi login.");
+        return;
       }
 
-      loginBtn.addEventListener("click", async () => {
-        status.textContent = "Memproses login...";
-        loginBtn.disabled = true;
-
-        try {
-          const { error } = await supabase.auth.signInWithPassword({
-            email: document.getElementById("email").value.trim(),
-            password: document.getElementById("password").value
-          });
-
-          if (error) throw error;
-          status.textContent = "Login berhasil.";
-          await updateSession();
-        } catch (error) {
-          status.textContent = "Login gagal: " + error.message;
-        } finally {
-          loginBtn.disabled = false;
-        }
-      });
-
-      generateBtn.addEventListener("click", async () => {
-        status.textContent = "Membuat license...";
-        generateBtn.disabled = true;
-
-        try {
-          const { data } = await supabase.auth.getSession();
-          if (!data.session) throw new Error("Silakan login ulang.");
-
-          const res = await fetch(FUNCTION_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": SUPABASE_PUBLISHABLE_KEY,
-              "Authorization": "Bearer " + data.session.access_token
-            },
-            body: JSON.stringify({ action: "generate" })
-          });
-
-          const result = await res.json();
-          if (!res.ok || !result.success) {
-            throw new Error(result.error || "Gagal membuat license.");
-          }
-
-          status.textContent = "License berhasil dibuat: " +
-            result.license_key;
-
-          const copyBtn = document.createElement("button");
-          copyBtn.textContent = "SALIN LICENSE KEY";
-          copyBtn.onclick = async () => {
-            try {
-              await navigator.clipboard.writeText(result.license_key);
-              status.textContent = "License berhasil disalin: " +
-                result.license_key;
-            } catch {
-              status.textContent = "Salin manual: " + result.license_key;
-            }
-          };
-          status.appendChild(document.createElement("br"));
-          status.appendChild(copyBtn);
-        } catch (error) {
-          status.textContent = "Error: " + error.message;
-        } finally {
-          generateBtn.disabled = false;
-        }
-      });
-
-      document.getElementById("logoutBtn").addEventListener("click",
-        async () => {
-          await supabase.auth.signOut();
-          status.textContent = "Kamu sudah logout.";
-          await updateSession();
-        });
-
-      await updateSession();
+      showAdmin(!!data.session);
     }
+
+    loginButton.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        showMessage("Isi email dan password terlebih dahulu.");
+        return;
+      }
+
+      loginButton.disabled = true;
+      showMessage("Sedang login...");
+
+      try {
+        const { data, error } =
+          await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+          });
+
+        if (error) throw error;
+
+        if (!data.session) {
+          throw new Error("Sesi login tidak ditemukan.");
+        }
+
+        showAdmin(true);
+        showMessage("Login berhasil.");
+      } catch (error) {
+        showMessage("Login gagal: " + error.message);
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+
+    generateButton.addEventListener("click", async () => {
+      generateButton.disabled = true;
+      showMessage("Sedang membuat license key...");
+      result.classList.add("hidden");
+
+      try {
+        const { data: sessionData, error: sessionError } =
+          await supabaseClient.auth.getSession();
+
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) {
+          throw new Error("Silakan login kembali.");
+        }
+
+        const { data, error } =
+          await supabaseClient.functions.invoke("license", {
+            body: { action: "generate" }
+          });
+
+        if (error) throw error;
+        if (!data || !data.success || !data.license_key) {
+          throw new Error(data?.error || "Gagal membuat lisensi.");
+        }
+
+        licenseKey.textContent = data.license_key;
+        result.classList.remove("hidden");
+        showMessage("License key berhasil dibuat.");
+      } catch (error) {
+        showMessage(
+          "Gagal membuat lisensi: " + (error.message || "Unknown error")
+        );
+      } finally {
+        generateButton.disabled = false;
+      }
+    });
+
+    document.getElementById("copyButton").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(licenseKey.textContent);
+        showMessage("License key berhasil disalin.");
+      } catch {
+        showMessage("Gagal menyalin. Salin license key secara manual.");
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        showMessage("Logout gagal: " + error.message);
+        return;
+      }
+
+      result.classList.add("hidden");
+      showAdmin(false);
+      showMessage("Kamu sudah logout.");
+    });
   </script>
 </body>
 </html>
