@@ -1,189 +1,121 @@
 
 package with.shadore.booster
 
-import android.content.pm.PackageManager
+import android.app.Activity
 import android.os.Bundle
+import android.content.Context
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.json.JSONObject
 import rikka.shizuku.Shizuku
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-
-private val Red = Color(0xFFD94444)
-private val Panel = Color(0xF0101010)
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
 
-    companion object {
-        private const val SUPABASE_URL =
-            "https://elrvmholtuoxzbcdhant.supabase.co/functions/v1/clever-handler"
-
-        private const val SUPABASE_KEY =
-            "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
-
-        private const val SHIZUKU_REQUEST_CODE = 1001
-    }
+    private val bg = Color(0xFF080B12)
+    private val panel = Color(0xFF141A26)
+    private val neon = Color(0xFF00E5FF)
+    private val white = Color.White
 
     private var licenseValid by mutableStateOf(false)
     private var isChecking by mutableStateOf(false)
-    private var statusText by mutableStateOf("Masukkan license key.")
+    private var statusText by mutableStateOf("Masukkan lisensi untuk melanjutkan")
+    private var licenseKey by mutableStateOf("")
+
     private var logText by mutableStateOf("SHADØRE siap.")
     private var isBoostOn by mutableStateOf(false)
     private var boostBusy by mutableStateOf(false)
 
-    private var pointerSpeed by mutableIntStateOf(0)
-    private var originalPointerSpeed: Int? = null
+    private var pointerSpeed by mutableFloatStateOf(0f)
+    private var originalPointerSpeed by mutableIntStateOf(0)
     private var mouseBusy by mutableStateOf(false)
-    private var mouseStatus by mutableStateOf(
-        "Tekan BACA untuk membaca nilai sistem."
+    private var mouseStatus by mutableStateOf("Kecepatan pointer belum dibaca")
+
+    private var animationBusy by mutableStateOf(false)
+    private var animationStatus by mutableStateOf("Belum ada perubahan")
+
+    private var windowScale by mutableStateOf("0.5")
+    private var transitionScale by mutableStateOf("0")
+    private var animatorScale by mutableStateOf("0.5")
+
+    private val animationPrefs by lazy {
+        getSharedPreferences("shadore_animation", Context.MODE_PRIVATE)
+    }
+
+    private val animationKeys = listOf(
+        "window_animation_scale",
+        "transition_animation_scale",
+        "animator_duration_scale"
     )
+
+    private val requestCode = 1001
+
+    private val permissionListener =
+        Shizuku.OnRequestPermissionResultListener { code, result ->
+            if (code == requestCode) {
+                if (result == 0) {
+                    addLog("Izin Shizuku diberikan.")
+                    Toast.makeText(
+                        this,
+                        "Shizuku berhasil diizinkan",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    addLog("Izin Shizuku ditolak.")
+                }
+            }
+        }
 
     private val binderReceivedListener =
         Shizuku.OnBinderReceivedListener {
-            runOnUiThread {
-                statusText = "Shizuku terhubung."
-                addLog(statusText)
-            }
+            addLog("Koneksi Shizuku terdeteksi.")
         }
 
     private val binderDeadListener =
         Shizuku.OnBinderDeadListener {
-            runOnUiThread {
-                statusText = "Shizuku terputus."
-                isBoostOn = false
-                addLog(statusText)
-            }
-        }
-
-    private val requestPermissionResultListener =
-        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-            if (requestCode == SHIZUKU_REQUEST_CODE) {
-                runOnUiThread {
-                    statusText =
-                        if (grantResult == PackageManager.PERMISSION_GRANTED) {
-                            "Izin Shizuku diberikan."
-                        } else {
-                            "Izin Shizuku ditolak."
-                        }
-                    addLog(statusText)
-                }
-            }
+            addLog("Koneksi Shizuku terputus.")
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
+        Shizuku.addRequestPermissionResultListener(permissionListener)
+        Shizuku.addBinderReceivedListener(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
-        Shizuku.addRequestPermissionResultListener(
-            requestPermissionResultListener
-        )
-
-        updateShizukuStatus()
 
         setContent {
-            var licenseKey by remember { mutableStateOf("") }
-
             MaterialTheme(
                 colorScheme = darkColorScheme(
-                    primary = Red,
-                    secondary = Red,
-                    background = Color.Black,
-                    surface = Panel
+                    primary = neon,
+                    background = bg,
+                    surface = panel
                 )
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    Image(
-                        painter = painterResource(R.drawable.shadore_bg),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.86f))
-                    )
-
-                    if (!licenseValid) {
-                        ActivationPage(
-                            licenseKey = licenseKey,
-                            onKeyChange = { licenseKey = it },
-                            statusText = statusText,
-                            isChecking = isChecking,
-                            onActivate = {
-                                if (licenseKey.isBlank()) {
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        "Masukkan license key dahulu.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    validateLicense(licenseKey.trim()) { valid ->
-                                        if (valid) {
-                                            licenseValid = true
-                                            addLog("Aktivasi berhasil.")
-                                            updateShizukuStatus()
-                                        }
-                                    }
-                                }
-                            }
-                        )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = bg
+                ) {
+                    if (licenseValid) {
+                        MainMenuPage()
                     } else {
-                        MainMenuPage(
-                            statusText = statusText,
-                            logText = logText,
-                            isBoostOn = isBoostOn,
-                            boostBusy = boostBusy,
-                            pointerSpeed = pointerSpeed,
-                            mouseBusy = mouseBusy,
-                            mouseStatus = mouseStatus,
-                            onToggleBoost = {
-                                toggleBoost(!isBoostOn)
-                            },
-                            onRequestShizuku = {
-                                requestShizukuPermission()
-                            },
-                            onReadPointer = { loadPointerSpeed() },
-                            onApplyPointer = { savePointerSpeed() },
-                            onRestorePointer = { restorePointerSpeed() },
-                            onLogout = {
-                                if (!isBoostOn && !boostBusy && !mouseBusy) {
-                                    licenseValid = false
-                                    statusText = "Masukkan license key."
-                                    addLog("Sesi lisensi ditutup.")
-                                } else {
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        "Matikan boost dan selesaikan proses dahulu.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
-                        )
+                        ActivationPage()
                     }
                 }
             }
@@ -191,50 +123,38 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ActivationPage(
-        licenseKey: String,
-        onKeyChange: (String) -> Unit,
-        statusText: String,
-        isChecking: Boolean,
-        onActivate: () -> Unit
-    ) {
+    private fun ActivationPage() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .background(bg)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                "SHADØRE",
-                color = Color.White,
-                fontSize = 38.sp,
+                text = "SHADØRE",
+                color = neon,
+                fontSize = 34.sp,
                 fontWeight = FontWeight.Black
             )
 
             Text(
-                "X AZRIL • SYSTEM OPTIMIZER",
-                color = Red,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+                text = "X AZRIL • GAME OPTIMIZER",
+                color = white,
+                fontSize = 12.sp
             )
 
             Spacer(Modifier.height(30.dp))
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Panel,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Red)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Column(Modifier.padding(20.dp)) {
                     Text(
-                        "AKTIVASI LISENSI",
-                        color = Red,
-                        fontSize = 20.sp,
+                        text = "AKTIVASI LISENSI",
+                        color = neon,
                         fontWeight = FontWeight.Bold
                     )
 
@@ -242,46 +162,30 @@ class MainActivity : ComponentActivity() {
 
                     OutlinedTextField(
                         value = licenseKey,
-                        onValueChange = onKeyChange,
+                        onValueChange = { licenseKey = it },
+                        label = { Text("Masukkan license key") },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Masukkan license key") },
-                        singleLine = true,
-                        enabled = !isChecking,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Ascii
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Red,
-                            unfocusedBorderColor = Color.Gray,
-                            cursorColor = Red
-                        )
+                        singleLine = true
                     )
 
                     Spacer(Modifier.height(14.dp))
 
                     Button(
-                        onClick = onActivate,
-                        enabled = !isChecking,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Red
-                        )
+                        onClick = { validateLicense(licenseKey) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isChecking && licenseKey.isNotBlank()
                     ) {
                         Text(
-                            if (isChecking) "MEMERIKSA LISENSI..."
-                            else "AKTIFKAN"
+                            if (isChecking) "MEMERIKSA..."
+                            else "AKTIFKAN SHADØRE"
                         )
                     }
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
 
                     Text(
-                        statusText,
-                        color = Color.LightGray,
+                        text = statusText,
+                        color = white,
                         fontSize = 12.sp
                     )
                 }
@@ -289,292 +193,318 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    
     @Composable
-    private fun MainMenuPage(
-        statusText: String,
-        logText: String,
-        isBoostOn: Boolean,
-        boostBusy: Boolean,
-        pointerSpeed: Int,
-        mouseBusy: Boolean,
-        mouseStatus: String,
-        onToggleBoost: () -> Unit,
-        onRequestShizuku: () -> Unit,
-        onReadPointer: () -> Unit,
-        onApplyPointer: () -> Unit,
-        onRestorePointer: () -> Unit,
-        onLogout: () -> Unit
-    ) {
-        var selectedSpeed by remember(pointerSpeed) {
-            mutableFloatStateOf(pointerSpeed.toFloat())
-        }
-
+    private fun MainMenuPage() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
+                .background(bg)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                "SHADØRE",
-                color = Color.White,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Black
-            )
+            Column {
+                Text(
+                    text = "SHADØRE",
+                    color = neon,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    text = "X AZRIL • PERFORMANCE CONTROL",
+                    color = Color.LightGray,
+                    fontSize = 11.sp
+                )
+            }
 
-            Text(
-                "X AZRIL • SYSTEM OPTIMIZER",
-                color = Red,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(22.dp))
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Panel,
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, Red)
+            // SHIZUKU
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(Modifier.padding(18.dp)) {
+                Column(Modifier.padding(16.dp)) {
                     Text(
-                        "STATUS SISTEM",
-                        color = Red,
-                        fontSize = 17.sp,
+                        "SHIZUKU AUTHORIZATION",
+                        color = neon,
                         fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = if (Shizuku.pingBinder())
+                            "Status: koneksi tersedia"
+                        else
+                            "Status: belum terhubung",
+                        color = white
                     )
 
                     Spacer(Modifier.height(10.dp))
 
-                    Text(statusText, color = Color.White)
-
-                    Spacer(Modifier.height(14.dp))
-
                     Button(
-                        onClick = onToggleBoost,
-                        enabled = !boostBusy,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Red
-                        )
-                    ) {
-                        Text(
-                            when {
-                                boostBusy -> "MEMPROSES..."
-                                isBoostOn -> "MATIKAN BOOST"
-                                else -> "NYALAKAN BOOST"
-                            },
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
-                    OutlinedButton(
-                        onClick = onRequestShizuku,
+                        onClick = { requestShizukuPermission() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("PERIKSA / MINTA IZIN SHIZUKU")
+                        Text("PERIKSA / MINTA IZIN")
                     }
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Panel,
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, Red)
+            // GAME BOOSTER
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(Modifier.padding(18.dp)) {
+                Column(Modifier.padding(16.dp)) {
                     Text(
-                        "MOUSE OTG",
-                        color = Red,
-                        fontSize = 18.sp,
+                        "GAME BOOSTER",
+                        color = neon,
                         fontWeight = FontWeight.Bold
                     )
 
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        "Kecepatan pointer sistem",
-                        color = Color.White
+                        if (isBoostOn) "Status: aktif" else "Status: nonaktif",
+                        color = white
                     )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Button(
+                        onClick = { toggleGameBooster() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !boostBusy
+                    ) {
+                        Text(
+                            if (boostBusy) "MEMPROSES..."
+                            else if (isBoostOn) "MATIKAN BOOST"
+                            else "AKTIFKAN BOOST"
+                        )
+                    }
+                }
+            }
+
+            // MOUSE OTG
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        "MOUSE OTG CONTROL",
+                        color = neon,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(mouseStatus, color = white, fontSize = 12.sp)
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Pointer: ${pointerSpeed.roundToInt()}",
+                            color = white
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Button(
+                            onClick = { readPointerSpeed() },
+                            enabled = !mouseBusy
+                        ) {
+                            Text("BACA")
+                        }
+                    }
 
                     Slider(
-                        value = selectedSpeed.coerceIn(-7f, 7f),
-                        onValueChange = { selectedSpeed = it },
-                        valueRange = -7f..7f,
-                        steps = 13,
-                        enabled = !mouseBusy
+                        value = pointerSpeed,
+                        onValueChange = { pointerSpeed = it },
+                        valueRange = -7f..7f
                     )
 
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { applyPointerSpeed() },
+                            modifier = Modifier.weight(1f),
+                            enabled = !mouseBusy
+                        ) {
+                            Text("TERAPKAN")
+                        }
+
+                        OutlinedButton(
+                            onClick = { restorePointerSpeed() },
+                            modifier = Modifier.weight(1f),
+                            enabled = !mouseBusy
+                        ) {
+                            Text("PULIHKAN")
+                        }
+                    }
+                }
+            }
+
+            // ANIMATION CONTROL
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
                     Text(
-                        "Nilai pilihan: ${selectedSpeed.roundToInt()}",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
+                        "ANIMATION CONTROL",
+                        color = neon,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        mouseStatus,
+                        "Atur animasi sistem Android.",
                         color = Color.LightGray,
                         fontSize = 12.sp
                     )
 
                     Spacer(Modifier.height(12.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = onReadPointer,
-                            enabled = !mouseBusy,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("BACA")
-                        }
+                    AnimationScaleSelector(
+                        title = "Window Animation",
+                        value = windowScale,
+                        onValueChange = { windowScale = it }
+                    )
 
-                        Button(
-                            onClick = {
-                                selectedSpeed.roundToInt()
-                                    .coerceIn(-7, 7)
-                                    .let { selected ->
-                                        onApplyPointerWithValue(
-                                            selected,
-                                            onApplyPointer
-                                        )
-                                    }
-                            },
-                            enabled = !mouseBusy,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Red
-                            )
-                        ) {
-                            Text("TERAPKAN")
-                        }
-                    }
+                    AnimationScaleSelector(
+                        title = "Transition Animation",
+                        value = transitionScale,
+                        onValueChange = { transitionScale = it }
+                    )
 
-                    Spacer(Modifier.height(8.dp))
-
-                    OutlinedButton(
-                        onClick = onRestorePointer,
-                        enabled = !mouseBusy,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("KEMBALIKAN NILAI AWAL")
-                    }
+                    AnimationScaleSelector(
+                        title = "Animator Duration",
+                        value = animatorScale,
+                        onValueChange = { animatorScale = it }
+                    )
 
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        "Pengaturan ini mengubah kecepatan pointer sistem, " +
-                            "bukan sensitivitas aim di dalam game.",
-                        color = Color.Gray,
-                        fontSize = 11.sp
+                        animationStatus,
+                        color = white,
+                        fontSize = 12.sp
                     )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Button(
+                        onClick = { applyAnimationSettings() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !animationBusy
+                    ) {
+                        Text("TERAPKAN ANIMASI")
+                    }
+
+                    OutlinedButton(
+                        onClick = { restoreAnimationSettings() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !animationBusy
+                    ) {
+                        Text("PULIHKAN NILAI AWAL")
+                    }
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Panel,
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, Color.DarkGray)
+            // LOG
+            Card(
+                colors = CardDefaults.cardColors(containerColor = panel),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
-                        "BUILD LOG",
-                        color = Red,
+                        "SYSTEM LOG",
+                        color = neon,
                         fontWeight = FontWeight.Bold
                     )
 
                     Spacer(Modifier.height(8.dp))
 
                     Text(
-                        logText,
-                        color = Color.White,
+                        text = logText,
+                        color = Color.LightGray,
                         fontSize = 12.sp
                     )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedButton(
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("KELUAR / GANTI KEY")
-            }
-
-            Spacer(Modifier.height(24.dp))
-
             Text(
-                "SHADØRE X AZRIL",
+                text = "SHADØRE X AZRIL",
                 color = Color.Gray,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 fontSize = 11.sp
             )
         }
     }
 
-    
-    private fun validateLicense(
-        key: String,
-        callback: (Boolean) -> Unit
+    @Composable
+    private fun AnimationScaleSelector(
+        title: String,
+        value: String,
+        onValueChange: (String) -> Unit
     ) {
-        if (isChecking) return
+        Column {
+            Text(title, color = white, fontSize = 13.sp)
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf("0", "0.5", "1").forEach { option ->
+                    FilterChip(
+                        selected = value == option,
+                        onClick = { onValueChange(option) },
+                        label = { Text(option) }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+
+    
+    private fun validateLicense(key: String) {
+        if (key.isBlank()) {
+            statusText = "License key tidak boleh kosong."
+            return
+        }
 
         isChecking = true
-        statusText = "Memvalidasi lisensi..."
-        addLog("Memulai validasi lisensi.")
+        statusText = "Memeriksa lisensi..."
 
         Thread {
-            var valid = false
-            var message = "Lisensi tidak valid."
             var connection: HttpURLConnection? = null
 
             try {
-                val deviceId = Settings.Secure.getString(
-                    contentResolver,
-                    Settings.Secure.ANDROID_ID
-                ) ?: "unknown-device"
-
-                connection = URL(SUPABASE_URL)
-                    .openConnection() as HttpURLConnection
-
-                connection.requestMethod = "POST"
-                connection.connectTimeout = 15000
-                connection.readTimeout = 15000
-                connection.doOutput = true
-
-                connection.setRequestProperty(
-                    "Content-Type",
-                    "application/json"
+                val url = URL(
+                    "https://elrvmholtuoxzbcdhant.supabase.co/functions/v1/clever-handler"
                 )
-                connection.setRequestProperty("apikey", SUPABASE_KEY)
-                connection.setRequestProperty(
-                    "Authorization",
-                    "Bearer $SUPABASE_KEY"
-                )
+
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty(
+                        "apikey",
+                        "sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
+                    )
+                    setRequestProperty("Authorization",
+                        "Bearer sb_publishable_5fpw9OhqRmS1nV66vANP9A_npNiE71B"
+                    )
+                }
 
                 val body = JSONObject()
-                    .put("action", "validate")
                     .put("license_key", key)
-                    .put("device_id", deviceId)
                     .toString()
 
                 connection.outputStream.use {
@@ -592,86 +522,86 @@ class MainActivity : ComponentActivity() {
                     it.readText()
                 }.orEmpty()
 
-                val json = JSONObject(response)
+                val json = try {
+                    JSONObject(response)
+                } catch (_: Exception) {
+                    JSONObject()
+                }
 
-                valid = code in 200..299 &&
-                    json.optBoolean("success", false)
+                val valid = code in 200..299 &&
+                    (
+                        json.optBoolean("valid", false) ||
+                        json.optBoolean("success", false)
+                    )
 
-                message = if (valid) {
-                    "Lisensi valid."
-                } else {
-                    json.optString(
-                        "error",
-                        "Lisensi ditolak oleh server."
+                runOnUiThread {
+                    isChecking = false
+                    licenseValid = valid
+                    statusText = if (valid) {
+                        "Lisensi berhasil diverifikasi."
+                    } else {
+                        json.optString(
+                            "message",
+                            "Lisensi tidak valid. Periksa respons server."
+                        )
+                    }
+
+                    addLog(
+                        if (valid) "Lisensi valid."
+                        else "Verifikasi lisensi gagal. HTTP $code"
                     )
                 }
             } catch (e: Exception) {
-                message = "Gagal menghubungi server. Periksa internet."
+                runOnUiThread {
+                    isChecking = false
+                    statusText = "Gagal terhubung: ${e.message}"
+                    addLog("Pemeriksaan lisensi gagal.")
+                }
             } finally {
                 connection?.disconnect()
-            }
-
-            runOnUiThread {
-                isChecking = false
-                statusText = message
-                addLog(message)
-
-                if (!valid) {
-                    Toast.makeText(
-                        this,
-                        message,
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-                callback(valid)
             }
         }.start()
     }
 
     private fun requestShizukuPermission() {
-        if (!Shizuku.pingBinder()) {
-            statusText = "Shizuku belum terhubung."
-            addLog(statusText)
-            return
-        }
+        try {
+            if (!Shizuku.pingBinder()) {
+                addLog("Shizuku belum aktif. Jalankan Shizuku terlebih dahulu.")
+                return
+            }
 
-        if (Shizuku.checkSelfPermission() ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            statusText = "Izin Shizuku sudah diberikan."
-            addLog(statusText)
-        } else {
-            Shizuku.requestPermission(SHIZUKU_REQUEST_CODE)
+            when {
+                Shizuku.checkSelfPermission() ==
+                    android.content.pm.PackageManager.PERMISSION_GRANTED -> {
+                    addLog("Izin Shizuku sudah tersedia.")
+                }
+
+                Shizuku.shouldShowRequestPermissionRationale() -> {
+                    Shizuku.requestPermission(requestCode)
+                }
+
+                else -> {
+                    Shizuku.requestPermission(requestCode)
+                }
+            }
+        } catch (e: Exception) {
+            addLog("Gagal memeriksa Shizuku: ${e.message}")
         }
     }
 
-    private fun updateShizukuStatus() {
-        statusText = if (Shizuku.pingBinder()) {
-            if (Shizuku.checkSelfPermission() ==
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                "Shizuku terhubung dan izin tersedia."
-            } else {
-                "Shizuku terhubung, izin belum diberikan."
-            }
-        } else {
-            "Shizuku belum terhubung."
+    private fun hasShizukuPermission(): Boolean {
+        return try {
+            Shizuku.pingBinder() &&
+                Shizuku.checkSelfPermission() ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        } catch (_: Exception) {
+            false
         }
-
-        addLog(statusText)
     }
 
     private fun runShell(command: String): String? {
-        if (!Shizuku.pingBinder()) {
-            statusText = "Shizuku belum terhubung."
-            return null
-        }
-
-        if (Shizuku.checkSelfPermission() !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            statusText = "Izin Shizuku belum diberikan."
+        if (!hasShizukuPermission()) {
+            addLog("Perintah dibatalkan: izin Shizuku belum tersedia.")
             return null
         }
 
@@ -682,61 +612,76 @@ class MainActivity : ComponentActivity() {
                 null
             )
 
-            val output = process.inputStream.bufferedReader().use {
-                it.readText()
-            }
+            val output = process.inputStream
+                .bufferedReader()
+                .use { it.readText() }
 
-            process.waitFor()
-            output.trim()
+            val error = process.errorStream
+                .bufferedReader()
+                .use { it.readText() }
+
+            val exitCode = process.waitFor()
+
+            if (exitCode != 0) {
+                addLog(
+                    "Perintah gagal (kode $exitCode): " +
+                        error.ifBlank { output }.take(250)
+                )
+                null
+            } else {
+                output.trim()
+            }
         } catch (e: Exception) {
             addLog("Perintah gagal: ${e.message}")
             null
         }
     }
 
-    private fun toggleBoost(enable: Boolean) {
+    private fun toggleGameBooster() {
         if (boostBusy) return
 
         boostBusy = true
-        addLog(
-            if (enable) "Mengaktifkan Game Booster..."
-            else "Mematikan Game Booster..."
-        )
 
         Thread {
-            val command = if (enable) {
-                "settings put global window_animation_scale 0.5; " +
-                    "settings put global transition_animation_scale 0.5; " +
-                    "settings put global animator_duration_scale 0.5"
-            } else {
-                "settings put global window_animation_scale 1.0; " +
-                    "settings put global transition_animation_scale 1.0; " +
-                    "settings put global animator_duration_scale 1.0"
-            }
+            val target = if (isBoostOn) "1.0" else "0.5"
 
-            val result = runShell(command)
+            val commands = listOf(
+                "settings put global window_animation_scale $target",
+                "settings put global transition_animation_scale $target",
+                "settings put global animator_duration_scale $target"
+            )
+
+            var success = true
+
+            for (command in commands) {
+                if (runShell(command) == null) {
+                    success = false
+                    break
+                }
+            }
 
             runOnUiThread {
                 boostBusy = false
 
-                if (result != null) {
-                    isBoostOn = enable
-                    statusText = if (enable) {
-                        "Game Booster aktif."
-                    } else {
-                        "Game Booster dimatikan."
-                    }
-                    addLog(statusText)
+                if (success) {
+                    isBoostOn = !isBoostOn
+                    addLog(
+                        if (isBoostOn) {
+                            "Game Booster: skala animasi diatur ke 0.5."
+                        } else {
+                            "Game Booster: skala animasi diatur ke 1.0."
+                        }
+                    )
                 } else {
-                    statusText = "Gagal menjalankan perintah. Periksa Shizuku."
-                    addLog(statusText)
+                    addLog("Game Booster gagal diterapkan sepenuhnya.")
                 }
             }
         }.start()
     }
 
-    private fun loadPointerSpeed() {
+    private fun readPointerSpeed() {
         if (mouseBusy) return
+
         mouseBusy = true
 
         Thread {
@@ -746,82 +691,213 @@ class MainActivity : ComponentActivity() {
 
             runOnUiThread {
                 mouseBusy = false
-                val value = result?.toIntOrNull()
 
-                if (value != null) {
-                    pointerSpeed = value.coerceIn(-7, 7)
+                val speed = result?.trim()?.toIntOrNull()
 
-                    if (originalPointerSpeed == null) {
-                        originalPointerSpeed = value
-                    }
-
-                    mouseStatus = "Nilai pointer berhasil dibaca."
-                    addLog("Pointer speed dibaca: $value")
+                if (speed != null) {
+                    originalPointerSpeed = speed
+                    pointerSpeed = speed.toFloat()
+                    mouseStatus = "Kecepatan pointer saat ini: $speed"
+                    addLog("Pointer speed berhasil dibaca.")
                 } else {
-                    mouseStatus = "Gagal membaca pointer. Periksa Shizuku."
-                    addLog(mouseStatus)
+                    mouseStatus = "Gagal membaca pointer speed."
+                    addLog("Tidak dapat membaca pointer speed.")
                 }
             }
         }.start()
     }
 
-    private fun savePointerSpeed() {
-        applyPointerSpeed(pointerSpeed)
-    }
-
-    private fun applyPointerSpeed(value: Int) {
+    private fun applyPointerSpeed() {
         if (mouseBusy) return
-        mouseBusy = true
 
-        val safeValue = value.coerceIn(-7, 7)
+        val speed = pointerSpeed.roundToInt().coerceIn(-7, 7)
+        mouseBusy = true
 
         Thread {
             val result = runShell(
-                "settings put system pointer_speed $safeValue"
+                "settings put system pointer_speed $speed"
             )
+
+            val verify = if (result != null) {
+                runShell("settings get system pointer_speed")
+            } else {
+                null
+            }
 
             runOnUiThread {
                 mouseBusy = false
 
-                if (result != null) {
-                    pointerSpeed = safeValue
-                    mouseStatus = "Nilai pointer diterapkan: $safeValue"
-                    addLog(mouseStatus)
+                if (verify?.trim()?.toIntOrNull() == speed) {
+                    mouseStatus = "Pointer speed berhasil diatur: $speed"
+                    addLog("Pointer speed diterapkan dan diverifikasi.")
                 } else {
                     mouseStatus = "Gagal menerapkan pointer speed."
-                    addLog(mouseStatus)
+                    addLog("Verifikasi pointer speed gagal.")
                 }
             }
         }.start()
     }
 
     private fun restorePointerSpeed() {
-        val original = originalPointerSpeed
+        pointerSpeed = originalPointerSpeed.toFloat()
+        applyPointerSpeed()
+    }
 
-        if (original == null) {
-            mouseStatus = "Tekan BACA dahulu untuk menyimpan nilai awal."
-            addLog(mouseStatus)
+    private fun applyAnimationSettings() {
+        if (animationBusy) return
+
+        if (!hasShizukuPermission()) {
+            animationStatus = "Aktifkan Shizuku dan izinkan akses terlebih dahulu."
+            addLog("Animation Control memerlukan izin Shizuku.")
             return
         }
 
-        applyPointerSpeed(original)
+        val values = listOf(
+            windowScale,
+            transitionScale,
+            animatorScale
+        )
+
+        if (values.any { it !in listOf("0", "0.5", "1") }) {
+            animationStatus = "Pilihan skala animasi tidak valid."
+            return
+        }
+
+        animationBusy = true
+
+        Thread {
+            var success = true
+            var savedOriginals = true
+
+            for (key in animationKeys) {
+                if (!animationPrefs.contains(key)) {
+                    val original = runShell("settings get global $key")
+
+                    if (original == null) {
+                        savedOriginals = false
+                        break
+                    }
+
+                    val normalized = original.trim().let {
+                        if (it.isBlank() || it == "null") "1.0" else it
+                    }
+
+                    animationPrefs.edit()
+                        .putString(key, normalized)
+                        .apply()
+                }
+            }
+
+            if (!savedOriginals) {
+                success = false
+            } else {
+                for (i in animationKeys.indices) {
+                    val key = animationKeys[i]
+                    val value = values[i]
+
+                    if (runShell(
+                            "settings put global $key $value"
+                        ) == null
+                    ) {
+                        success = false
+                        break
+                    }
+
+                    val verify = runShell(
+                        "settings get global $key"
+                    )
+
+                    if (verify?.trim()?.toFloatOrNull() !=
+                        value.toFloatOrNull()
+                    ) {
+                        success = false
+                        break
+                    }
+                }
+            }
+
+            runOnUiThread {
+                animationBusy = false
+
+                animationStatus = if (success) {
+                    "Animasi berhasil diterapkan dan diverifikasi."
+                } else {
+                    "Gagal menerapkan semua pengaturan. Periksa log."
+                }
+
+                addLog(animationStatus)
+            }
+        }.start()
+    }
+
+    private fun restoreAnimationSettings() {
+        if (animationBusy) return
+
+        if (!hasShizukuPermission()) {
+            animationStatus = "Aktifkan Shizuku dan izinkan akses terlebih dahulu."
+            return
+        }
+
+        if (!animationKeys.all { animationPrefs.contains(it) }) {
+            animationStatus = "Nilai awal belum tersimpan. Terapkan pengaturan terlebih dahulu."
+            addLog("Pemulihan dibatalkan: nilai awal tidak lengkap.")
+            return
+        }
+
+        animationBusy = true
+
+        Thread {
+            var success = true
+
+            for (key in animationKeys) {
+                val original = animationPrefs.getString(key, "1.0")
+                    ?: "1.0"
+
+                if (runShell(
+                        "settings put global $key $original"
+                    ) == null
+                ) {
+                    success = false
+                    break
+                }
+
+                val verify = runShell(
+                    "settings get global $key"
+                )
+
+                if (verify?.trim()?.toFloatOrNull() !=
+                    original.toFloatOrNull()
+                ) {
+                    success = false
+                    break
+                }
+            }
+
+            runOnUiThread {
+                animationBusy = false
+
+                animationStatus = if (success) {
+                    "Nilai animasi awal berhasil dipulihkan."
+                } else {
+                    "Pemulihan gagal atau belum lengkap. Periksa log."
+                }
+
+                addLog(animationStatus)
+            }
+        }.start()
     }
 
     private fun addLog(message: String) {
-        logText = "$message\n$logText"
-
-        if (logText.length > 3000) {
-            logText = logText.take(3000)
+        runOnUiThread {
+            logText = "$message\n$logText"
+            logText = logText.lines().take(30).joinToString("\n")
         }
     }
 
     override fun onDestroy() {
+        Shizuku.removeRequestPermissionResultListener(permissionListener)
         Shizuku.removeBinderReceivedListener(binderReceivedListener)
         Shizuku.removeBinderDeadListener(binderDeadListener)
-        Shizuku.removeRequestPermissionResultListener(
-            requestPermissionResultListener
-        )
         super.onDestroy()
     }
 }
-
