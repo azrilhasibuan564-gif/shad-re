@@ -326,17 +326,14 @@ private fun ActivationPage() {
         Spacer(Modifier.height(16.dp))  
 
         Button(
-    onClick = {
-        currentPage = "Inject Center"
-        runInjectAll()
-    },
-    modifier = Modifier.fillMaxWidth(),
-    enabled = !injectBusy
-) {
-    Text(
-        if (injectBusy) "SEDANG MEMPROSES..."
-        else "MULAI INJECT ALL"
-    )
+            onClick = { validateLicense(licenseKey) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isChecking
+        ) {
+            Text(
+                if (isChecking) "MEMERIKSA LISENSI..."
+                else "AKTIFKAN LISENSI"
+            )
         }
 
         if (isChecking) {  
@@ -470,9 +467,10 @@ private fun InjectCenterPage() {
                 )
 
                 LinearProgressIndicator(
-                    progress = { injectProgress / 100f },
+                    progress = injectProgress / 100f,
                     modifier = Modifier.fillMaxWidth(),
-                    color = neon
+                    color = neon,
+                    trackColor = Color(0xFF493036)
                 )
 
                 Text(
@@ -681,23 +679,19 @@ private fun DashboardPage() {
                 Spacer(Modifier.height(6.dp))  
                 Text("$injectProgress%", color = white, fontWeight = FontWeight.Bold)  
                 Spacer(Modifier.height(12.dp))  
-                Button(  
-                    Button(
-    onClick = {
-        currentPage = "Inject Center"
-        runInjectAll()
-    },
-    modifier = Modifier.fillMaxWidth(),
-    enabled = !injectBusy
-) {
-    Text(
-        if (injectBusy) "SEDANG MEMPROSES..."
-        else "MULAI INJECT ALL"
-    )
-                    }
-                    modifier = Modifier.fillMaxWidth(),  
-                    enabled = !injectBusy  
-                ) { Text(if (injectBusy) "SEDANG MEMPROSES..." else "MULAI INJECT ALL") }  
+                Button(
+                    onClick = {
+                        currentPage = "Inject Center"
+                        runInjectAll()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !injectBusy
+                ) {
+                    Text(
+                        if (injectBusy) "SEDANG MEMPROSES..."
+                        else "MULAI INJECT ALL"
+                    )
+                }  
             }  
         }  
 
@@ -1156,6 +1150,18 @@ private fun applyAnimationSettings() {
                     success = false  
                     break  
                 }  
+                val normalized = original.trim().let { if (it.isBlank() || it == "null") "1.0" else it }  
+                animationPrefs.edit().putString(key, normalized).apply()  
+            }  
+        }  
+        if (success) {  
+            for (i in animationKeys.indices) {  
+                val key = animationKeys[i]  
+                val value = values[i]  
+                if (runShell("settings put global $key $value") == null) {  
+                    success = false  
+                    break  
+                }  
                 val verify = runShell("settings get global $key")  
 
                 if (verify?.trim()?.toFloatOrNull() != value.toFloatOrNull()) {  
@@ -1236,3 +1242,4 @@ override fun onDestroy() {
 }
 
 }
+            
