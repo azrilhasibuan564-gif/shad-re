@@ -515,34 +515,6 @@ private fun CinematicIntro(onFinished: () -> Unit) {
     }
 
     @Composable
-    private fun MousePage() {
-        Column(
-            Modifier.fillMaxSize().background(bg).verticalScroll(rememberScrollState()).padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            PageTitle("TOLS MOUSE")
-            Text(mouseStatus, color = white)
-            Text("Pointer speed: ${pointerSpeed.roundToInt()}", color = white)
-            Slider(
-                value = pointerSpeed.coerceIn(-7f, 7f),
-                onValueChange = { pointerSpeed = it },
-                valueRange = -7f..7f,
-                enabled = !mouseBusy
-            )
-            Button(onClick = { readPointerSpeed() }, modifier = Modifier.fillMaxWidth(), enabled = !mouseBusy) {
-                Text("BACA KECEPATAN POINTER")
-            }
-            Button(onClick = { applyPointerSpeed() }, modifier = Modifier.fillMaxWidth(), enabled = !mouseBusy) {
-                Text("TERAPKAN")
-            }
-            OutlinedButton(onClick = { restorePointerSpeed() }, modifier = Modifier.fillMaxWidth(), enabled = !mouseBusy) {
-                Text("PULIHKAN NILAI AWAL")
-            }
-            BackButton()
-        }
-    }
-
-    @Composable
     private fun DeviceMonitorPage() {
         Column(
             Modifier.fillMaxSize().background(bg).padding(20.dp),
