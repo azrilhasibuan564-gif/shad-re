@@ -219,14 +219,15 @@ Box(
         ) {  
             
 Image(
-    painter = painterResource(id = R.drawable.shadore_rabbit),
+    painter = painterResource(
+        id = com.shadore.booster.R.drawable.shadore_rabbit
+    ),
     contentDescription = "Logo SHADØRE",
     modifier = Modifier
         .size(150.dp)
         .alpha(logoAlpha)
         .scale(logoScale)
 )
-        }  
 
         Spacer(Modifier.height(24.dp))  
 
