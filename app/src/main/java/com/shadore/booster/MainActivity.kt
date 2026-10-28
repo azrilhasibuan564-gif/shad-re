@@ -1,4 +1,3 @@
-
 package com.shadore.booster
 
 import android.app.Activity
@@ -283,10 +282,10 @@ class MainActivity : ComponentActivity() {
                     Spacer(Modifier.height(16.dp))
 
                     LinearProgressIndicator(
-                        progress = { injectProgress / 100f },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = neon
-                    )
+    progress = injectProgress / 100f,
+    modifier = Modifier.fillMaxWidth(),
+    color = neon
+)
 
                     Spacer(Modifier.height(8.dp))
 
@@ -347,10 +346,10 @@ class MainActivity : ComponentActivity() {
             )
 
             LinearProgressIndicator(
-                progress = { injectProgress / 100f },
-                modifier = Modifier.fillMaxWidth(),
-                color = neon
-            )
+    progress = injectProgress / 100f,
+    modifier = Modifier.fillMaxWidth(),
+    color = neon
+)
 
             Text(
                 "$injectProgress%",
