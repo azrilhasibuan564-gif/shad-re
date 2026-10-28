@@ -105,66 +105,56 @@ class MainActivity : ComponentActivity() {
         }
 
     
+
 override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     @Suppress("DEPRECATION")
     window.decorView.systemUiVisibility = (
-        View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        View.SYSTEM_UI_FLAG_FULLSCREEN or
+        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
     )
 
     Shizuku.addRequestPermissionResultListener(permissionListener)
     Shizuku.addBinderReceivedListener(binderReceivedListener)
     Shizuku.addBinderDeadListener(binderDeadListener)
 
-    // Lanjutkan dengan setContent milikmu di sini.
-}
-
-
-        Shizuku.addRequestPermissionResultListener(permissionListener)
-        Shizuku.addBinderReceivedListener(binderReceivedListener)
-        Shizuku.addBinderDeadListener(binderDeadListener)
-
-        
-
-setContent {
-    MaterialTheme(
-        colorScheme = darkColorScheme(
-            primary = Color(0xFFB8323C),
-            onPrimary = Color.White,
-            secondary = Color(0xFFD05A63),
-            background = Color(0xFF0B0B0D),
-            onBackground = Color.White,
-            surface = Color(0xFF151518),
-            onSurface = Color.White,
-            surfaceVariant = Color(0xFF242428),
-            onSurfaceVariant = Color(0xFFC7C7CC),
-            outline = Color(0xFF38383D)
-        )
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = bg
+    setContent {
+        MaterialTheme(
+            colorScheme = darkColorScheme(
+                primary = Color(0xFFB8323C),
+                onPrimary = Color.White,
+                secondary = Color(0xFFD05A63),
+                background = Color(0xFF0B0B0D),
+                onBackground = Color.White,
+                surface = Color(0xFF151518),
+                onSurface = Color.White,
+                surfaceVariant = Color(0xFF242428),
+                onSurfaceVariant = Color(0xFFC7C7CC),
+                outline = Color(0xFF38383D)
+            )
         ) {
-            if (licenseValid) {
-                MainMenuPage()
-            } else {
-                ActivationPage()
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = bg
+            ) {
+                if (licenseValid) {
+                    MainMenuPage()
+                } else {
+                    ActivationPage()
+                }
             }
         }
     }
 }
-    }
-    
 
-    @Composable
-    private fun ActivationPage() {
-        Column(
+@Composable
+private fun ActivationPage() {
+      Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(bg)
