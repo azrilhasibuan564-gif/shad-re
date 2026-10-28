@@ -27,10 +27,10 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: BUILD APK
-        id: build_apk
-        continue-on-error: true
+  id: build_apk
+  run: bash ./gradlew assembleDebug
         
-        run: |
+run: |
           set +e
           gradle assembleDebug --stacktrace --console=plain > build-log.txt 2>&1
           BUILD_STATUS=$?
@@ -40,8 +40,8 @@ jobs:
           tail -n 40 build-log.txt
           exit $BUILD_STATUS
           
-
-      - name: UPLOAD BUILD LOG
+            
+- name: UPLOAD BUILD LOG
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -49,15 +49,14 @@ jobs:
           path: build-log.txt
           if-no-files-found: warn
 
-      - name: CHECK BUILD RESULT
+        - name: CHECK BUILD RESULT
         if: always() && steps.build_apk.outcome == 'failure'
         run: exit 1
 
-      - name: UPLOAD APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: SHADORE-V1-X-AZRIL-${{ github.run_id }}
-          path: app/build/outputs/apk/debug/*.apk
+        - name: Upload APK
+  uses: actions/upload-artifact@v4
+  with:
+    name: SHADORE-APK
+    path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           
