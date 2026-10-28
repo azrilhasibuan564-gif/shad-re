@@ -252,13 +252,11 @@ Image(
 
         Spacer(Modifier.height(28.dp))  
 
-        LinearProgressIndicator(  
-            modifier = Modifier  
-                .width(170.dp)  
-                .alpha(logoAlpha),  
-            color = neon,  
-            trackColor = Color(0xFF45121C)  
-        )  
+        LinearProgressIndicator(
+    progress = injectProgress / 100f,
+    modifier = Modifier.fillMaxWidth(),
+    color = neon
+)
 
         Spacer(Modifier.height(12.dp))  
 
@@ -681,9 +679,18 @@ private fun DashboardPage() {
                 Text("$injectProgress%", color = white, fontWeight = FontWeight.Bold)  
                 Spacer(Modifier.height(12.dp))  
                 Button(  
-                    onClick = {
-    currentPage = "Inject Center"
-    runInjectAll()
+                    Button(
+    onClick = {
+        currentPage = "Inject Center"
+        runInjectAll()
+    },
+    modifier = Modifier.fillMaxWidth(),
+    enabled = !injectBusy
+) {
+    Text(
+        if (injectBusy) "SEDANG MEMPROSES..."
+        else "MULAI INJECT ALL"
+    )
                     }
                     modifier = Modifier.fillMaxWidth(),  
                     enabled = !injectBusy  
