@@ -269,19 +269,21 @@ Image(
         )  
     }  
 
-        TextButton(
-        onClick = onFinished,
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(18.dp)
-    ) {
-        Text("SKIP  ›", color = white.copy(alpha = 0.8f))
-    }
-} // penutup Box
-} // penutup CinematicIntro()
+    TextButton(  
+        onClick = onFinished,  
+        modifier = Modifier  
+            .align(Alignment.BottomEnd)  
+            .padding(18.dp)  
+    ) {  
+        Text("SKIP  ›", color = white.copy(alpha = 0.8f))  
+    }  
+}
 
-@Composable
-private fun ActivationPage() {
+}
+}
+
+@Composable  
+private fun ActivationPage() {  
     Column(  
         modifier = Modifier  
             .fillMaxSize()  
@@ -598,7 +600,7 @@ private fun DashboardPage() {
                 rowItems.forEach { item ->  
                     Card(  
                         modifier = Modifier.weight(1f).height(112.dp)  
-                            .clickable { currentPage = item.first },  
+                             .clickable { currentPage = item.first },  
                         shape = RoundedCornerShape(18.dp),  
                         colors = CardDefaults.cardColors(containerColor = panel)  
                     ) {  
@@ -1116,3 +1118,4 @@ override fun onDestroy() {
 }
 
 }
+             
