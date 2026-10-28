@@ -3,7 +3,7 @@ plugins{
     id'org.jetbrains.kotlin.android'
 }
 android{
-    namespace 'with.shadore.booster'
+    namespace 'com.shadore.booster'
     compileSdk 35
     defaultConfig {
         applicationId "with.shadore.booster"
