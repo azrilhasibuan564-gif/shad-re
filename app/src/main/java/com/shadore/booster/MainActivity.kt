@@ -1,4 +1,4 @@
-package with.shadore.booster
+package com.shadore.booster
 
 import android.content.Context
 import android.content.Intent
@@ -22,48 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight               }
-                val verify = runShell("settings get global $key")
-                if (verify?.trim()?.toFloatOrNull() != original.toFloatOrNull()) {
-                    success = false
-                    break
-                }
-            }
-            runOnUiThread {
-                animationBusy = false
-                animationStatus = if (success) "Nilai animasi awal dipulihkan." else "Pemulihan gagal. Periksa log."
-                addLog(animationStatus)
-                recordHistory("Animation Restore", if (success) "BERHASIL" else "GAGAL", animationStatus)
-            }
-        }
-    }
-
-    private fun addLog(message: String) {
-        runOnUiThread {
-            val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-            logText = "[$time] $message\n$logText"
-            logText = logText.lines().take(60).joinToString("\n")
-        }
-    }
-
-    private fun recordHistory(feature: String, status: String, details: String) {
-        val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        val entry = "$time | $feature | $status\n$details"
-        runOnUiThread {
-            history.add(0, entry)
-            while (history.size > 100) history.removeAt(history.lastIndex)
-            historyPrefs.edit().putString("items", history.joinToString("\n---\n")).apply()
-        }
-    }
-
-    override fun onDestroy() {
-        Shizuku.removeRequestPermissionResultListener(permissionListener)
-        Shizuku.removeBinderReceivedListener(binderReceivedListener)
-        Shizuku.removeBinderDeadListener(binderDeadListener)
-        executor.shutdown()
-        super.onDestroy()
-    }
-}
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
@@ -863,3 +822,45 @@ class MainActivity : ComponentActivity() {
                 if (runShell("settings put global $key $original") == null) {
                     success = false
                     break
+                }
+                val verify = runShell("settings get global $key")
+                if (verify?.trim()?.toFloatOrNull() != original.toFloatOrNull()) {
+                    success = false
+                    break
+                }
+            }
+            runOnUiThread {
+                animationBusy = false
+                animationStatus = if (success) "Nilai animasi awal dipulihkan." else "Pemulihan gagal. Periksa log."
+                addLog(animationStatus)
+                recordHistory("Animation Restore", if (success) "BERHASIL" else "GAGAL", animationStatus)
+            }
+        }
+    }
+
+    private fun addLog(message: String) {
+        runOnUiThread {
+            val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+            logText = "[$time] $message\n$logText"
+            logText = logText.lines().take(60).joinToString("\n")
+        }
+    }
+
+    private fun recordHistory(feature: String, status: String, details: String) {
+        val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val entry = "$time | $feature | $status\n$details"
+        runOnUiThread {
+            history.add(0, entry)
+            while (history.size > 100) history.removeAt(history.lastIndex)
+            historyPrefs.edit().putString("items", history.joinToString("\n---\n")).apply()
+        }
+    }
+
+    override fun onDestroy() {
+        Shizuku.removeRequestPermissionResultListener(permissionListener)
+        Shizuku.removeBinderReceivedListener(binderReceivedListener)
+        Shizuku.removeBinderDeadListener(binderDeadListener)
+        executor.shutdown()
+        super.onDestroy()
+    }
+}
