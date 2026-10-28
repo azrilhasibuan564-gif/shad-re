@@ -9,6 +9,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -36,7 +40,8 @@ import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
-
+    
+    private var showIntro by mutableStateOf(true)
     private val bg = Color(0xFF09090B)
     private val panel = Color(0xFF151116)
     private val neon = Color(0xFFFF3548)
@@ -134,10 +139,14 @@ override fun onCreate(savedInstanceState: Bundle?) {
                 Modifier.fillMaxSize(),
                 color = bg
             ) {
-                if (licenseValid) {
-                    AppNavigation()
-                } else {
-                    ActivationPage()
+                if (showIntro) {
+    CinematicIntro(
+        onFinished = { showIntro = false }
+    )
+} else if (licenseValid) {
+    AppNavigation()
+} else {
+    ActivationPage()
                 }
             }
         }
@@ -145,49 +154,131 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 
 
-    @Composable
-    private fun ActivationPage() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFF26070C), bg, Color.Black)))
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("SHADØRE", color = neon, fontSize = 36.sp, fontWeight = FontWeight.Black)
-            Text("X AZRIL • GAME OPTIMIZER", color = white, fontSize = 12.sp)
-            Spacer(Modifier.height(28.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = panel)
-            ) {
-                Column(Modifier.padding(20.dp)) {
-                    Text("AKTIVASI LISENSI", color = neon, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = licenseKey,
-                        onValueChange = { licenseKey = it },
-                        label = { Text("Masukkan license key") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+    
+@Composable
+private fun CinematicIntro(onFinished: () -> Unit) {
+    var start by remember { mutableStateOf(false) }
+
+    val logoAlpha by animateFloatAsState(
+        targetValue = if (start) 1f else 0f,
+        animationSpec = tween(1200),
+        label = "logoAlpha"
+    )
+
+    val logoScale by animateFloatAsState(
+        targetValue = if (start) 1f else 0.65f,
+        animationSpec = tween(
+            durationMillis = 1400,
+            easing = FastOutSlowInEasing
+        ),
+        label = "logoScale"
+    )
+
+    val infinite = rememberInfiniteTransition(label = "glow")
+    val glow by infinite.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    LaunchedEffect(Unit) {
+        start = true
+        delay(3200)
+        onFinished()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color.Black,
+                        Color(0xFF240008),
+                        Color(0xFF09090B)
                     )
-                    Spacer(Modifier.height(12.dp))
-                    Button(
-                        onClick = { validateLicense(licenseKey) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isChecking && licenseKey.isNotBlank()
-                    ) {
-                        Text(if (isChecking) "MEMERIKSA..." else "AKTIFKAN SHADØRE")
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    Text(statusText, color = white, fontSize = 12.sp)
-                }
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .background(
+                        Color(0xFF38000B).copy(alpha = glow * 0.7f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Ø",
+                    color = neon.copy(alpha = glow),
+                    fontSize = 100.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier
+                        .alpha(logoAlpha)
+                        .scale(logoScale)
+                )
             }
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "SHADØRE",
+                color = neon.copy(alpha = logoAlpha),
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 7.sp,
+                modifier = Modifier.scale(logoScale)
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "INITIALIZING SYSTEM",
+                color = white.copy(alpha = logoAlpha * 0.75f),
+                fontSize = 10.sp,
+                letterSpacing = 3.sp
+            )
+
+            Spacer(Modifier.height(28.dp))
+
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .width(170.dp)
+                    .alpha(logoAlpha),
+                color = neon,
+                trackColor = Color(0xFF45121C)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                "X AZRIL • PERFORMANCE CONTROL",
+                color = Color.LightGray.copy(alpha = logoAlpha),
+                fontSize = 9.sp,
+                letterSpacing = 1.5.sp
+            )
+        }
+
+        TextButton(
+            onClick = onFinished,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(18.dp)
+        ) {
+            Text("SKIP  ›", color = white.copy(alpha = 0.8f))
         }
     }
+}
+
 
     private fun validateLicense(key: String) {
         if (key.isBlank()) {
