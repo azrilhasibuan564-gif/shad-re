@@ -228,6 +228,7 @@ Image(
         .alpha(logoAlpha)
         .scale(logoScale)
 )
+        } // penutup Box logo
 
         Spacer(Modifier.height(24.dp))  
 
@@ -279,7 +280,6 @@ Image(
     }  
 }
 
-}
 }
 
 @Composable  
@@ -600,7 +600,7 @@ private fun DashboardPage() {
                 rowItems.forEach { item ->  
                     Card(  
                         modifier = Modifier.weight(1f).height(112.dp)  
-                             .clickable { currentPage = item.first },  
+                            .clickable { currentPage = item.first },  
                         shape = RoundedCornerShape(18.dp),  
                         colors = CardDefaults.cardColors(containerColor = panel)  
                     ) {  
@@ -715,6 +715,7 @@ private fun DeviceMonitorPage() {
 private fun PerformancePage() {  
     Column(  
         Modifier.fillMaxSize().background(bg).padding(20.dp),  
+
         verticalArrangement = Arrangement.spacedBy(14.dp)  
     ) {  
         PageTitle("PERFORMANCE CENTER")  
@@ -1118,4 +1119,3 @@ override fun onDestroy() {
 }
 
 }
-             
