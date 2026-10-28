@@ -410,21 +410,125 @@ private fun validateLicense(key: String) {
     }  
 }  
 
-@Composable  
-private fun AppNavigation() {  
-    when (currentPage) {  
-        "Dashboard" -> DashboardPage()  
-        "Game" -> GamePage()  
-        "Crosshair" -> CrosshairPage()  
-        "Tols Mouse" -> MousePage()  
-        "Device Monitor" -> DeviceMonitorPage()  
-        "Build Log" -> BuildLogPage()  
-        "Performance Center" -> PerformancePage()  
-        "System Check" -> SystemCheckPage()  
-        "Activity History" -> HistoryPage()  
-        else -> DashboardPage()  
-    }  
-}  
+
+@Composable
+private fun AppNavigation() {
+    when (currentPage) {
+        "Dashboard" -> DashboardPage()
+        "Inject Center" -> InjectCenterPage()
+        "Game" -> GamePage()
+        "Crosshair" -> CrosshairPage()
+        "Tols Mouse" -> MousePage()
+        "Device Monitor" -> DeviceMonitorPage()
+        "Build Log" -> BuildLogPage()
+        "Performance Center" -> PerformancePage()
+        "System Check" -> SystemCheckPage()
+        "Activity History" -> HistoryPage()
+        else -> DashboardPage()
+    }
+}
+
+   
+@Composable
+private fun InjectCenterPage() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        PageTitle("INJECT CENTER")
+
+        Text(
+            text = when {
+                injectBusy -> "Proses sedang berjalan..."
+                injectProgress >= 100 -> "Pemeriksaan selesai."
+                injectProgress > 0 -> "Proses berhenti atau belum selesai."
+                else -> "Siap menjalankan pemeriksaan."
+            },
+            color = white
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "PROGRESS",
+                    color = neon,
+                    fontWeight = FontWeight.Bold
+                )
+
+                LinearProgressIndicator(
+                    progress = { injectProgress / 100f },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = neon
+                )
+
+                Text(
+                    "$injectProgress%",
+                    color = white,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Button(
+                    onClick = { runInjectAll() },
+                    enabled = !injectBusy,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (injectBusy) "SEDANG MEMPROSES..."
+                        else if (injectProgress > 0) "JALANKAN ULANG"
+                        else "MULAI INJECT ALL"
+                    )
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "PROCESS LOG",
+                    color = neon,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = logText,
+                    color = Color(0xFFD0D0D5),
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        OutlinedButton(
+            onClick = { currentPage = "Dashboard" },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("KEMBALI KE DASHBOARD")
+        }
+    }
+}
+
   
     @Composable  
 private fun MousePage() {  
@@ -577,7 +681,10 @@ private fun DashboardPage() {
                 Text("$injectProgress%", color = white, fontWeight = FontWeight.Bold)  
                 Spacer(Modifier.height(12.dp))  
                 Button(  
-                    onClick = { runInjectAll() },  
+                    onClick = {
+    currentPage = "Inject Center"
+    runInjectAll()
+                    }
                     modifier = Modifier.fillMaxWidth(),  
                     enabled = !injectBusy  
                 ) { Text(if (injectBusy) "SEDANG MEMPROSES..." else "MULAI INJECT ALL") }  
