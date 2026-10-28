@@ -52,7 +52,7 @@ import kotlin.math.roundToInt
 class MainActivity : ComponentActivity() {
 
     private val bg = Color(0xFF09090B)
-private val panel = Color(0xFF17171C)
+private val panel = Color(0xFF151116)
 private val neon = Color(0xFFFF3548)
 private val white = Color(0xFFF5F5F7)
 
@@ -257,13 +257,14 @@ private fun MainMenuPage() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF301016),
-                                panel
-                            )
-                        )
-                    )
+    Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF20070B),
+            Color(0xFF0B0B0F),
+            Color(0xFF050507)
+        )
+    )
+)
                     .padding(22.dp)
             ) {
                 Text(
