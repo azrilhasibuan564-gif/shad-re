@@ -255,9 +255,9 @@ Image(
         LinearProgressIndicator(
     progress = injectProgress / 100f,
     modifier = Modifier.fillMaxWidth(),
-    color = neon
-)
-
+    color = neon,
+    trackColor = Color(0xFF493036)
+    )
         Spacer(Modifier.height(12.dp))  
 
         Text(  
@@ -325,16 +325,19 @@ private fun ActivationPage() {
 
         Spacer(Modifier.height(16.dp))  
 
-        Button(  
-            onClick = { validateLicense(licenseKey) },  
-            modifier = Modifier.fillMaxWidth(),  
-            enabled = !isChecking  
-        ) {  
-            Text(  
-                if (isChecking) "MEMERIKSA LISENSI..."  
-                else "AKTIFKAN SHADØRE"  
-            )  
-        }  
+        Button(
+    onClick = {
+        currentPage = "Inject Center"
+        runInjectAll()
+    },
+    modifier = Modifier.fillMaxWidth(),
+    enabled = !injectBusy
+) {
+    Text(
+        if (injectBusy) "SEDANG MEMPROSES..."
+        else "MULAI INJECT ALL"
+    )
+        }
 
         if (isChecking) {  
             Spacer(Modifier.height(16.dp))  
