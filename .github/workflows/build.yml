@@ -27,21 +27,15 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: BUILD APK
-  id: build_apk
-  run: bash ./gradlew assembleDebug
-        
-run: |
-          set +e
-          gradle assembleDebug --stacktrace --console=plain > build-log.txt 2>&1
+        id: build_apk
+        shell: bash
+        run: |
+          bash ./gradlew assembleDebug --stacktrace --console=plain > build-log.txt 2>&1
           BUILD_STATUS=$?
-          echo "===== ERROR PENTING ====="
-          grep -n -i -E "error|failed|failure|exception|unresolved reference|could not resolve|manifest merger" build-log.txt | tail -n 50
-          echo "===== 40 BARIS TERAKHIR ====="
-          tail -n 40 build-log.txt
-          exit $BUILD_STATUS
-          
-            
-- name: UPLOAD BUILD LOG
+          cat build-log.txt
+          exit "$BUILD_STATUS"
+
+      - name: UPLOAD BUILD LOG
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -49,14 +43,11 @@ run: |
           path: build-log.txt
           if-no-files-found: warn
 
-        - name: CHECK BUILD RESULT
-        if: always() && steps.build_apk.outcome == 'failure'
-        run: exit 1
-
-        - name: Upload APK
-  uses: actions/upload-artifact@v4
-  with:
-    name: SHADORE-APK
-    path: app/build/outputs/apk/debug/app-debug.apk
+      - name: UPLOAD APK
+        if: steps.build_apk.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHADORE-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           
