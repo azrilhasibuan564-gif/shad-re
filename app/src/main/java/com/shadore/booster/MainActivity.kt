@@ -101,42 +101,49 @@ class MainActivity : ComponentActivity() {
         addLog("Koneksi Shizuku terputus.")
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
 
-        history.addAll(
-            historyPrefs.getString("items", "").orEmpty()
-                .split("\n---\n").filter { it.isNotBlank() }.take(100)
-        )
+    history.addAll(
+        historyPrefs.getString("items", "").orEmpty()
+            .split("\n---\n")
+            .filter { it.isNotBlank() }
+            .take(100)
+    )
 
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    @Suppress("DEPRECATION")
+    window.decorView.systemUiVisibility =
+        View.SYSTEM_UI_FLAG_FULLSCREEN or
+        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
-        Shizuku.addRequestPermissionResultListener(permissionListener)
-        Shizuku.addBinderReceivedListener(binderReceivedListener)
-        Shizuku.addBinderDeadListener(binderDeadListener)
-
-        setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = neon,
-                    onPrimary = Color.White,
-                    secondary = Color(0xFFD05A63),
-                    background = bg,
-                    onBackground = white,
-                    surface = panel,
-                    onSurface = white
-                )
+    setContent {
+        MaterialTheme(
+            colorScheme = darkColorScheme(
+                primary = neon,
+                onPrimary = Color.White,
+                secondary = Color(0xFFD05A63),
+                background = bg,
+                onBackground = white,
+                surface = panel,
+                onSurface = white
+            )
+        ) {
+            Surface(
+                Modifier.fillMaxSize(),
+                color = bg
             ) {
-                Surface(Modifier.fillMaxSize(), color = bg) {
-                    if (licenseValid) AppNavigation() else ActivationPage()
+                if (licenseValid) {
+                    AppNavigation()
+                } else {
+                    ActivationPage()
                 }
             }
         }
     }
+}
+
 
     @Composable
     private fun ActivationPage() {
