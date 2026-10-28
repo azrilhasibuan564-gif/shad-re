@@ -9,6 +9,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.animation.core.*
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
@@ -217,13 +219,14 @@ Box(
         ) {  
             Text(  
                 "Ø",  
-                color = neon.copy(alpha = glow),  
-                fontSize = 100.sp,  
-                fontWeight = FontWeight.Black,  
-                modifier = Modifier  
-                    .alpha(logoAlpha)  
-                    .scale(logoScale)  
-            )  
+                Image(
+    painter = painterResource(id = R.drawable.shadore_rabbit),
+    contentDescription = "Logo SHADØRE",
+    modifier = Modifier
+        .size(150.dp)
+        .alpha(logoAlpha)
+        .scale(logoScale)
+)
         }  
 
         Spacer(Modifier.height(24.dp))  
