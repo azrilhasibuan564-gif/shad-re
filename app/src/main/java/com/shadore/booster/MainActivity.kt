@@ -279,6 +279,76 @@ private fun CinematicIntro(onFinished: () -> Unit) {
     }
 }
 
+    @Composable
+    private fun ActivationPage() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bg)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "SHADØRE",
+                color = neon,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "LICENSE ACTIVATION",
+                color = white,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(28.dp))
+
+            OutlinedTextField(
+                value = licenseKey,
+                onValueChange = { licenseKey = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("License Key") },
+                singleLine = true,
+                enabled = !isChecking,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = neon,
+                    focusedLabelColor = neon,
+                    cursorColor = neon
+                )
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { validateLicense(licenseKey) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isChecking
+            ) {
+                Text(
+                    if (isChecking) "MEMERIKSA LISENSI..."
+                    else "AKTIFKAN SHADØRE"
+                )
+            }
+
+            if (isChecking) {
+                Spacer(Modifier.height(16.dp))
+                CircularProgressIndicator(color = neon)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = statusText,
+                color = if (licenseValid) Color(0xFF65E890) else white,
+                fontSize = 12.sp
+            )
+        }
+    }
 
     private fun validateLicense(key: String) {
         if (key.isBlank()) {
@@ -350,6 +420,115 @@ private fun CinematicIntro(onFinished: () -> Unit) {
             "System Check" -> SystemCheckPage()
             "Activity History" -> HistoryPage()
             else -> DashboardPage()
+        }
+    }
+    
+        @Composable
+    private fun MousePage() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bg)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            PageTitle("TOLS MOUSE")
+
+            Text(
+                text = "Atur kecepatan pointer perangkat.",
+                color = white
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = panel
+                ),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "POINTER SPEED",
+                        color = neon,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = pointerSpeed.roundToInt().toString(),
+                        color = white,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black
+                    )
+
+                    Slider(
+                        value = pointerSpeed,
+                        onValueChange = { pointerSpeed = it },
+                        valueRange = -7f..7f,
+                        steps = 13,
+                        enabled = !mouseBusy
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("-7", color = Color.LightGray)
+                        Text("0", color = Color.LightGray)
+                        Text("+7", color = Color.LightGray)
+                    }
+                }
+            }
+
+            Text(
+                text = mouseStatus,
+                color = white,
+                fontSize = 12.sp
+            )
+
+            Button(
+                onClick = { readPointerSpeed() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !mouseBusy
+            ) {
+                Text("BACA KECEPATAN SAAT INI")
+            }
+
+            Button(
+                onClick = { applyPointerSpeed() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !mouseBusy
+            ) {
+                Text("TERAPKAN KECEPATAN")
+            }
+
+            OutlinedButton(
+                onClick = { restorePointerSpeed() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !mouseBusy
+            ) {
+                Text("PULIHKAN KECEPATAN TERSIMPAN")
+            }
+
+            if (mouseBusy) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = neon
+                )
+            }
+
+            Text(
+                text = "Catatan: perubahan memerlukan izin Shizuku. " +
+                    "Kecepatan pointer terutama berlaku pada perangkat " +
+                    "yang menggunakan mouse fisik.",
+                color = Color.LightGray,
+                fontSize = 11.sp
+            )
+
+            BackButton()
         }
     }
 
@@ -857,6 +1036,7 @@ private fun CinematicIntro(onFinished: () -> Unit) {
                         break
                     }
                     val verify = runShell("settings get global $key")
+ 
                     if (verify?.trim()?.toFloatOrNull() != value.toFloatOrNull()) {
                         success = false
                         break
