@@ -111,6 +111,7 @@ class MainActivity : ComponentActivity() {
         Shizuku.addBinderDeadListener(binderDeadListener)
 
         
+
 setContent {
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -138,20 +139,8 @@ setContent {
         }
     }
 }
-
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = bg
-                ) {
-                    if (licenseValid) {
-                        MainMenuPage()
-                    } else {
-                        ActivationPage()
-                    }
-                }
-            }
-        }
     }
+    
 
     @Composable
     private fun ActivationPage() {
