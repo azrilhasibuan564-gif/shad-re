@@ -269,20 +269,19 @@ Image(
         )  
     }  
 
-    TextButton(  
-        onClick = onFinished,  
-        modifier = Modifier  
-            .align(Alignment.BottomEnd)  
-            .padding(18.dp)  
-    ) {  
-        Text("SKIP  ›", color = white.copy(alpha = 0.8f))  
-    }  
-}
+        TextButton(
+        onClick = onFinished,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(18.dp)
+    ) {
+        Text("SKIP  ›", color = white.copy(alpha = 0.8f))
+    }
+} // penutup Box
+} // penutup CinematicIntro()
 
-}
-
-@Composable  
-private fun ActivationPage() {  
+@Composable
+private fun ActivationPage() {
     Column(  
         modifier = Modifier  
             .fillMaxSize()  
