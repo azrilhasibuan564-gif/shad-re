@@ -1,5 +1,6 @@
 package with.shadore.booster
 
+import android.view.View
 import android.app.Activity
 import android.os.Bundle
 import android.content.Context
@@ -103,8 +104,27 @@ class MainActivity : ComponentActivity() {
             addLog("Koneksi Shizuku terputus.")
         }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    @Suppress("DEPRECATION")
+    window.decorView.systemUiVisibility = (
+        View.SYSTEM_UI_FLAG_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+    )
+
+    Shizuku.addRequestPermissionResultListener(permissionListener)
+    Shizuku.addBinderReceivedListener(binderReceivedListener)
+    Shizuku.addBinderDeadListener(binderDeadListener)
+
+    // Lanjutkan dengan setContent milikmu di sini.
+}
+
 
         Shizuku.addRequestPermissionResultListener(permissionListener)
         Shizuku.addBinderReceivedListener(binderReceivedListener)
