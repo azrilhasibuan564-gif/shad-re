@@ -217,9 +217,8 @@ Box(
                 ),  
             contentAlignment = Alignment.Center  
         ) {  
-            Text(  
-                "Ø",  
-                Image(
+            
+Image(
     painter = painterResource(id = R.drawable.shadore_rabbit),
     contentDescription = "Logo SHADØRE",
     modifier = Modifier
