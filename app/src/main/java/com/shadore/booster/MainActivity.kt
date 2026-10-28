@@ -28,7 +28,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,10 +40,10 @@ import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
 
-    private val bg = Color(0xFF080B12)
-    private val panel = Color(0xFF141A26)
-    private val neon = Color(0xFF00E5FF)
-    private val white = Color.White
+    private val bg = Color(0xFF09090B)
+private val panel = Color(0xFF17171C)
+private val neon = Color(0xFFFF3548)
+private val white = Color(0xFFF5F5F7)
 
     private var licenseValid by mutableStateOf(false)
     private var isChecking by mutableStateOf(false)
@@ -223,29 +223,82 @@ private fun ActivationPage() {
         }
     }
 
-    @Composable
-    private fun MainMenuPage() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(bg)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+    
+@Composable
+private fun MainMenuPage() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+        // PREMIUM HEADER
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
         ) {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF301016),
+                                panel
+                            )
+                        )
+                    )
+                    .padding(22.dp)
+            ) {
                 Text(
                     text = "SHADØRE",
                     color = neon,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Black
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 3.sp
                 )
+
+                Spacer(Modifier.height(5.dp))
+
                 Text(
-                    text = "X AZRIL • PERFORMANCE CONTROL",
+                    text = "X AZRIL  •  PERFORMANCE CONTROL",
                     color = Color.LightGray,
-                    fontSize = 11.sp
+                    fontSize = 11.sp,
+                    letterSpacing = 1.sp
                 )
+
+                Spacer(Modifier.height(18.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                neon,
+                                CircleShape
+                            )
+                    )
+
+                    Text(
+                        text = "GAMING PERFORMANCE SYSTEM",
+                        color = white,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+        }
+
+        // SHIZUKU
+        
 
             // SHIZUKU
             Card(
