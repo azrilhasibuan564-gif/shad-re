@@ -26,14 +26,14 @@ jobs:
       - name: SET UP ANDROID SDK
         uses: android-actions/setup-android@v4
 
+      
       - name: BUILD APK
         id: build_apk
         shell: bash
         run: |
-          bash ./gradlew assembleDebug --stacktrace --console=plain > build-log.txt 2>&1
-          BUILD_STATUS=$?
-          cat build-log.txt
-          exit "$BUILD_STATUS"
+          gradle --version
+          gradle assembleDebug --stacktrace --console=plain
+          
 
       - name: UPLOAD BUILD LOG
         if: always()
