@@ -1116,8 +1116,6 @@ private fun runInjectAll() {
     }  
 }  
 
-private fun applyAnimationSettings() {  
-
 private fun applyAnimationSettings() {
     if (animationBusy) return
 
