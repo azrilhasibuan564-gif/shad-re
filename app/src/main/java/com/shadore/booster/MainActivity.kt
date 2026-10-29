@@ -638,111 +638,293 @@ private fun MousePage() {
     }  
 }  
 
-@Composable  
-private fun DashboardPage() {  
-    Column(  
-        modifier = Modifier.fillMaxSize().background(bg)  
-            .verticalScroll(rememberScrollState()).padding(16.dp),  
-        verticalArrangement = Arrangement.spacedBy(16.dp)  
-    ) {  
-        Column {  
-            Text("SHADØRE", color = neon, fontSize = 32.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)  
-            Text("X AZRIL • PERFORMANCE CONTROL", color = Color.LightGray, fontSize = 11.sp)  
-            Spacer(Modifier.height(8.dp))  
-            Text(  
-                if (hasShizukuPermission()) "● SHIZUKU AUTHORIZED" else "● SHIZUKU BELUM SIAP",  
-                color = if (hasShizukuPermission()) Color(0xFF65E890) else neon,  
-                fontSize = 11.sp,  
-                fontWeight = FontWeight.Bold  
-            )  
-        }  
 
-        Card(  
-            modifier = Modifier.fillMaxWidth(),  
-            shape = RoundedCornerShape(22.dp),  
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF26090E))  
-        ) {  
-            Column(  
-                modifier = Modifier.fillMaxWidth().padding(20.dp),  
-                horizontalAlignment = Alignment.CenterHorizontally  
-            ) {  
-                Text("INJECT ALL", color = neon, fontSize = 24.sp, fontWeight = FontWeight.Black)  
-                Spacer(Modifier.height(6.dp))  
-                Text("Jalankan pemeriksaan dan operasi yang didukung", color = white, fontSize = 12.sp)  
-                Spacer(Modifier.height(14.dp))  
-                LinearProgressIndicator(  
-                    progress = injectProgress / 100f,  
-                    modifier = Modifier.fillMaxWidth(),  
-                    color = neon,  
-                    trackColor = Color(0xFF493036)  
-                )  
-                Spacer(Modifier.height(6.dp))  
-                Text("$injectProgress%", color = white, fontWeight = FontWeight.Bold)  
-                Spacer(Modifier.height(12.dp))  
-                Button(
-                    onClick = {
-                        currentPage = "Inject Center"
-                        runInjectAll()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !injectBusy
-                ) {
+@Composable
+private fun DashboardPage() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // HEADER
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "SHADØRE",
+                    color = neon,
+                    fontSize = 27.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    "Android Performance",
+                    color = Color.LightGray,
+                    fontSize = 12.sp
+                )
+            }
+
+            Text(
+                "V2",
+                color = neon,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // STATUS SHIZUKU
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (hasShizukuPermission())
+                    Color(0xFF10251A) else Color(0xFF26090E)
+            )
+        ) {
+            Text(
+                text = if (hasShizukuPermission())
+                    "✓ Shizuku ready"
+                else
+                    "! Shizuku belum siap",
+                color = if (hasShizukuPermission())
+                    Color(0xFF65E890) else neon,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(18.dp)
+            )
+        }
+
+        // INFORMASI PERANGKAT
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DashboardInfoCard(
+                "RAM",
+                "Lihat monitor",
+                "Penggunaan memori",
+                Modifier.weight(1f)
+            ) {
+                currentPage = "Device Monitor"
+            }
+
+            DashboardInfoCard(
+                "CPU",
+                "Perangkat",
+                "Informasi sistem",
+                Modifier.weight(1f)
+            ) {
+                currentPage = "System Check"
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DashboardInfoCard(
+                "Battery",
+                "Lihat monitor",
+                "Status baterai",
+                Modifier.weight(1f)
+            ) {
+                currentPage = "Device Monitor"
+            }
+
+            DashboardInfoCard(
+                "Storage",
+                "Lihat monitor",
+                "Penyimpanan",
+                Modifier.weight(1f)
+            ) {
+                currentPage = "Device Monitor"
+            }
+        }
+
+        // INJECT
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    currentPage = "Inject Center"
+                },
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "▶",
+                    color = neon,
+                    fontSize = 26.sp
+                )
+
+                Spacer(Modifier.width(18.dp))
+
+                Column {
                     Text(
-                        if (injectBusy) "SEDANG MEMPROSES..."
-                        else "MULAI INJECT ALL"
+                        "Inject All",
+                        color = white,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                }  
-            }  
-        }  
+                    Text(
+                        "Optimasi performa perangkat",
+                        color = Color.LightGray,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
 
-        Text("CONTROL CENTER", color = neon, fontSize = 13.sp, fontWeight = FontWeight.Bold)  
-        val menuItems = listOf(  
-            "Game" to "GAME TOOLS",  
-            "Crosshair" to "AIM OVERLAY",  
-            "Tols Mouse" to "POINTER CONTROL",  
-            "Device Monitor" to "DEVICE STATUS",  
-            "Build Log" to "BUILD OUTPUT",  
-            "Performance Center" to "PERFORMANCE",  
-            "System Check" to "DIAGNOSTICS",  
-            "Activity History" to "RUN HISTORY"  
-        )  
-        menuItems.chunked(2).forEach { rowItems ->  
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {  
-                rowItems.forEach { item ->  
-                    Card(  
-                        modifier = Modifier.weight(1f).height(112.dp)  
-                            .clickable { currentPage = item.first },  
-                        shape = RoundedCornerShape(18.dp),  
-                        colors = CardDefaults.cardColors(containerColor = panel)  
-                    ) {  
-                        Column(  
-                            Modifier.fillMaxSize().padding(14.dp),  
-                            verticalArrangement = Arrangement.Center  
-                        ) {  
-                            Text(item.first, color = neon, fontSize = 15.sp, fontWeight = FontWeight.Bold)  
-                            Spacer(Modifier.height(6.dp))  
-                            Text(item.second, color = Color.LightGray, fontSize = 10.sp)  
-                        }  
-                    }  
-                }  
-                if (rowItems.size == 1) Spacer(Modifier.weight(1f))  
-            }  
-        }  
+        // CONTROL CENTER
+        Text(
+            "CONTROL CENTER",
+            color = neon,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
 
-        Card(  
-            modifier = Modifier.fillMaxWidth(),  
-            colors = CardDefaults.cardColors(containerColor = panel),  
-            shape = RoundedCornerShape(16.dp)  
-        ) {  
-            Column(Modifier.padding(14.dp)) {  
-                Text("SYSTEM LOG", color = neon, fontWeight = FontWeight.Bold)  
-                Spacer(Modifier.height(8.dp))  
-                Text(logText, color = Color(0xFFD0D0D5), fontSize = 11.sp)  
-            }  
-        }  
-        Text("SHADØRE X AZRIL", color = Color.Gray, fontSize = 11.sp, modifier = Modifier.align(Alignment.CenterHorizontally))  
-    }  
-}  
+        val menuItems = listOf(
+            Triple("Game", "Game optimizer", "🎮"),
+            Triple("Tols Mouse", "Pointer control", "⚙"),
+            Triple("Performance Center", "Performance", "⚡"),
+            Triple("Device Monitor", "Device status", "▣"),
+            Triple("System Check", "Diagnostics", "✓"),
+            Triple("Activity History", "Run history", "◷")
+        )
+
+        menuItems.chunked(2).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEach { item ->
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(112.dp)
+                            .clickable {
+                                currentPage = item.first
+                            },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = panel
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(14.dp),
+                            verticalArrangement =
+                                Arrangement.Center
+                        ) {
+                            Text(
+                                item.third,
+                                color = neon,
+                                fontSize = 23.sp
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                item.first,
+                                color = white,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                item.second,
+                                color = Color.LightGray,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // SYSTEM LOG
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    "SYSTEM LOG",
+                    color = neon,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    logText,
+                    color = Color.LightGray,
+                    fontSize = 11.sp
+                )
+            }
+        }
+
+        Text(
+            "SHADØRE V2 X AZRIL",
+            color = Color.Gray,
+            fontSize = 11.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+    }
+}
+
+@Composable
+private fun DashboardInfoCard(
+    title: String,
+    value: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(118.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = panel
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                title,
+                color = Color.Gray,
+                fontSize = 11.sp
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                value,
+                color = white,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+            Text(
+                subtitle,
+                color = neon,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
 
 @Composable  
 private fun GamePage() {  
