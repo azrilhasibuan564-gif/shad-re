@@ -1444,8 +1444,7 @@ override fun onDestroy() {
     Shizuku.removeBinderReceivedListener(binderReceivedListener)  
     Shizuku.removeBinderDeadListener(binderDeadListener)  
     executor.shutdown()  
-    super.onDestroy()  
-}
+    super.onDestroy() 
 
 }
             
