@@ -409,6 +409,7 @@ private fun validateLicense(key: String) {
 }  
 
 
+
 @Composable
 private fun AppNavigation() {
     when (currentPage) {
@@ -422,6 +423,8 @@ private fun AppNavigation() {
         "Performance Center" -> PerformancePage()
         "System Check" -> SystemCheckPage()
         "Activity History" -> HistoryPage()
+        "Display" -> DisplayPage()
+        "Bloat" -> BloatPage()
         else -> DashboardPage()
     }
 }
@@ -793,13 +796,15 @@ private fun DashboardPage() {
         )
 
         val menuItems = listOf(
-            Triple("Game", "Game optimizer", "🎮"),
-            Triple("Tols Mouse", "Pointer control", "⚙"),
-            Triple("Performance Center", "Performance", "⚡"),
-            Triple("Device Monitor", "Device status", "▣"),
-            Triple("System Check", "Diagnostics", "✓"),
-            Triple("Activity History", "Run history", "◷")
-        )
+    Triple("Game", "Game optimizer", "🎮"),
+    Triple("Tols Mouse", "Pointer control", "⚙"),
+    Triple("Performance Center", "Performance", "⚡"),
+    Triple("Device Monitor", "Device status", "📊"),
+    Triple("Display", "Screen settings", "▣"),
+    Triple("Bloat", "App management", "⚙"),
+    Triple("System Check", "Diagnostics", "✓"),
+    Triple("Activity History", "Run history", "◷")
+)
 
         menuItems.chunked(2).forEach { rowItems ->
             Row(
@@ -1444,3 +1449,130 @@ override fun onDestroy() {
 
 }
             
+@Composable
+private fun DisplayPage() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        PageTitle("DISPLAY CONTROL")
+
+        Text(
+            "Pengaturan tampilan Android",
+            color = white
+        )
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    "Pengaturan sistem",
+                    color = neon,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "Buka pengaturan layar untuk mengubah " +
+                        "refresh rate, kecerahan, dan ukuran tampilan " +
+                        "sesuai dukungan perangkat.",
+                    color = Color.LightGray
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Button(
+                    onClick = {
+                        try {
+                            startActivity(
+                                Intent(Settings.ACTION_DISPLAY_SETTINGS)
+                            )
+                            addLog("Pengaturan Display dibuka.")
+                        } catch (e: Exception) {
+                            addLog("Pengaturan Display gagal dibuka.")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("BUKA PENGATURAN DISPLAY")
+                }
+            }
+        }
+
+        BackButton()
+    }
+}
+
+@Composable
+private fun BloatPage() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        PageTitle("BLOAT MANAGEMENT")
+
+        Text(
+            "Kelola aplikasi yang terpasang di perangkat.",
+            color = white
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    "Pengaturan aplikasi",
+                    color = neon,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "Pilih aplikasi secara manual untuk melihat " +
+                        "opsi info, izin, atau pencopotan yang tersedia.",
+                    color = Color.LightGray
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Button(
+                    onClick = {
+                        try {
+                            startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS
+                                )
+                            )
+                            addLog("Pengaturan aplikasi dibuka.")
+                        } catch (e: Exception) {
+                            addLog("Gagal membuka pengaturan aplikasi.")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("BUKA PENGELOLAAN APLIKASI")
+                }
+            }
+        }
+
+        BackButton()
+    }
+}
