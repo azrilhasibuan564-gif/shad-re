@@ -1117,67 +1117,88 @@ private fun runInjectAll() {
 }  
 
 private fun applyAnimationSettings() {  
-    if (animationBusy) return  
-    if (!hasShizukuPermission()) {  
-        animationStatus = "Aktifkan Shizuku dan izinkan akses terlebih dahulu."  
-        addLog(animationStatus)  
-        return  
-    }  
-    val values = listOf(windowScale, transitionScale, animatorScale)  
-    if (values.any { it !in listOf("0", "0.5", "1") }) {  
-        animationStatus = "Pilihan skala animasi tidak valid."  
-        return  
-    }  
-    animationBusy = true  
-    executor.execute {  
-        var success = true  
-        for (key in animationKeys) {  
-            if (!animationPrefs.contains(key)) {  
-                val original = runShell("settings get global $key")  
-                if (original == null) {  
-                    success = false  
-                    break  
-                }  
-                val normalized = original.trim().let { if (it.isBlank() || it == "null") "1.0" else it }  
-                animationPrefs.edit().putString(key, normalized).apply()  
-            }  
-        }  
-        if (success) {  
-            for (i in animationKeys.indices) {  
-                val key = animationKeys[i]  
-                val value = values[i]  
-                if (runShell("settings put global $key $value") == null) {  
-                    success = false  
-                    break  
-                }  
-                val normalized = original.trim().let { if (it.isBlank() || it == "null") "1.0" else it }  
-                animationPrefs.edit().putString(key, normalized).apply()  
-            }  
-        }  
-        if (success) {  
-            for (i in animationKeys.indices) {  
-                val key = animationKeys[i]  
-                val value = values[i]  
-                if (runShell("settings put global $key $value") == null) {  
-                    success = false  
-                    break  
-                }  
-                val verify = runShell("settings get global $key")  
 
-                if (verify?.trim()?.toFloatOrNull() != value.toFloatOrNull()) {  
-                    success = false  
-                    break  
-                }  
-            }  
-        }  
-        runOnUiThread {  
-            animationBusy = false  
-            animationStatus = if (success) "Animasi diterapkan dan diverifikasi." else "Gagal menerapkan pengaturan. Periksa log."  
-            addLog(animationStatus)  
-            recordHistory("Animation Settings", if (success) "BERHASIL" else "GAGAL", animationStatus)  
-        }  
-    }  
-}  
+private fun applyAnimationSettings() {
+    if (animationBusy) return
+
+    if (!hasShizukuPermission()) {
+        animationStatus = "Aktifkan Shizuku dan izinkan akses terlebih dahulu."
+        addLog(animationStatus)
+        return
+    }
+
+    val values = listOf(windowScale, transitionScale, animatorScale)
+
+    if (values.any { it !in listOf("0", "0.5", "1") }) {
+        animationStatus = "Pilihan skala animasi tidak valid."
+        addLog(animationStatus)
+        return
+    }
+
+    animationBusy = true
+
+    executor.execute {
+        var success = true
+
+        // Simpan nilai awal sebelum mengubah pengaturan.
+        for (key in animationKeys) {
+            if (!animationPrefs.contains(key)) {
+                val original = runShell("settings get global $key")
+
+                if (original == null) {
+                    success = false
+                    break
+                }
+
+                val normalized = original.trim().let {
+                    if (it.isBlank() || it == "null") "1.0" else it
+                }
+
+                animationPrefs.edit()
+                    .putString(key, normalized)
+                    .apply()
+            }
+        }
+
+        // Terapkan dan verifikasi pengaturan animasi.
+        if (success) {
+            for (i in animationKeys.indices) {
+                val key = animationKeys[i]
+                val value = values[i]
+
+                if (runShell("settings put global $key $value") == null) {
+                    success = false
+                    break
+                }
+
+                val verify = runShell("settings get global $key")
+
+                if (verify?.trim()?.toFloatOrNull() != value.toFloatOrNull()) {
+                    success = false
+                    break
+                }
+            }
+        }
+
+        runOnUiThread {
+            animationBusy = false
+
+            animationStatus = if (success) {
+                "Animasi diterapkan dan diverifikasi."
+            } else {
+                "Gagal menerapkan pengaturan. Periksa log."
+            }
+
+            addLog(animationStatus)
+
+            recordHistory(
+                "Animation Settings",
+                if (success) "BERHASIL" else "GAGAL",
+                animationStatus
+            )
+        }
+    }
+}
 
 private fun restoreAnimationSettings() {  
     if (animationBusy) return  
