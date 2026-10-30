@@ -1741,13 +1741,13 @@ private fun recordHistory(feature: String, status: String, details: String) {
     }  
 }  
 
-override fun onDestroy() {  
-    Shizuku.removeRequestPermissionResultListener(permissionListener)  
-    Shizuku.removeBinderReceivedListener(binderReceivedListener)  
-    Shizuku.removeBinderDeadListener(binderDeadListener)  
-    executor.shutdown()  
-    super.onDestroy() 
-
+override fun onDestroy() {
+    Shizuku.removeRequestPermissionResultListener(permissionListener)
+    Shizuku.removeBinderReceivedListener(binderReceivedListener)
+    Shizuku.removeBinderDeadListener(binderDeadListener)
+    executor.shutdown()
+    super.onDestroy()
+}
 }
             
 @Composable
