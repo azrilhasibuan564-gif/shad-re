@@ -1748,7 +1748,6 @@ override fun onDestroy() {
     executor.shutdown()
     super.onDestroy()
 }
-}
             
 @Composable
 private fun DisplayPage() {
