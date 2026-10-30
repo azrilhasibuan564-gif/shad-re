@@ -1835,67 +1835,90 @@ private fun DisplayPage() {
 
 @Composable
 private fun BloatPage() {
+    val context = LocalContext.current
+
+    val systemApps = remember {
+        context.packageManager
+            .getInstalledApplications(0)
+            .filter {
+                (it.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+            }
+            .sortedBy {
+                it.loadLabel(context.packageManager).toString()
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(bg)
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         PageTitle("BLOAT MANAGEMENT")
 
         Text(
-            "Kelola aplikasi yang terpasang di perangkat.",
+            "Aplikasi sistem terdeteksi: ${systemApps.size}",
+            color = neon,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            "Pilih aplikasi untuk melihat informasi dan pengaturannya.",
             color = white
         )
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = panel
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+        systemApps.forEach { app ->
+            val appName = app.loadLabel(
+                context.packageManager
+            ).toString()
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = panel
+                )
             ) {
-                Text(
-                    "Pengaturan aplikasi",
-                    color = neon,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    "Pilih aplikasi secara manual untuk melihat " +
-                        "opsi info, izin, atau pencopotan yang tersedia.",
-                    color = Color.LightGray
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        try {
-                            startActivity(
-                                Intent(
-                                    Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS
-                                )
-                            )
-                            addLog("Pengaturan aplikasi dibuka.")
-                        } catch (e: Exception) {
-                            addLog("Gagal membuka pengaturan aplikasi.")
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    Modifier.padding(12.dp)
                 ) {
-                    Text("BUKA PENGELOLAAN APLIKASI")
+                    Text(
+                        appName,
+                        color = white,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        app.packageName,
+                        color = Color.LightGray
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            try {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    android.net.Uri.parse(
+                                        "package:${app.packageName}"
+                                    )
+                                )
+                                context.startActivity(intent)
+                                addLog("Info aplikasi dibuka: $appName")
+                            } catch (e: Exception) {
+                                addLog("Gagal membuka info aplikasi.")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("LIHAT PENGATURAN")
+                    }
                 }
             }
         }
 
         BackButton()
     }
-}
 }
