@@ -1441,10 +1441,17 @@ private fun applyPointerSpeed() {
     }  
 }  
 
-private fun restorePointerSpeed() {  
-    pointerSpeed = originalPointerSpeed.toFloat().coerceIn(-7f, 7f)  
-    applyPointerSpeed()  
-}  
+
+private fun restorePointerSpeed() {
+    if (originalPointerSpeed == null) {
+        mouseStatus = "Baca pointer speed terlebih dahulu."
+        addLog(mouseStatus)
+        return
+    }
+
+    pointerSpeed = originalPointerSpeed.toFloat().coerceIn(-7f, 7f)
+    applyPointerSpeed()
+}
 
 private fun refreshDeviceInfo() {  
     deviceText = buildString {  
