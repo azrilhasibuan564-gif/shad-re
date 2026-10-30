@@ -162,6 +162,16 @@ ActivationPage()
 }
 }
 }
+private fun hasBrightnessPermission(): Boolean {
+    return Settings.System.canWrite(this)
+}
+
+private fun openBrightnessPermissionSettings() {
+    val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+        data = android.net.Uri.parse("package:$packageName")
+    }
+    startActivity(intent)
+}
 
 @Composable
 private fun CinematicIntro(onFinished: () -> Unit) {
@@ -1742,6 +1752,17 @@ override fun onDestroy() {
             
 @Composable
 private fun DisplayPage() {
+    val context = LocalContext.current
+    var brightness by remember {
+        mutableFloatStateOf(
+            Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS,
+                128
+            ).toFloat()
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1752,50 +1773,60 @@ private fun DisplayPage() {
     ) {
         PageTitle("DISPLAY CONTROL")
 
-        Text(
-            "Pengaturan tampilan Android",
-            color = white
-        )
-
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = panel
-            )
+            colors = CardDefaults.cardColors(containerColor = panel)
         ) {
             Column(Modifier.padding(16.dp)) {
-                Text(
-                    "Pengaturan sistem",
-                    color = neon,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(8.dp))
+                Text("KECERAHAN LAYAR", color = neon)
 
                 Text(
-                    "Buka pengaturan layar untuk mengubah " +
-                        "refresh rate, kecerahan, dan ukuran tampilan " +
-                        "sesuai dukungan perangkat.",
-                    color = Color.LightGray
+                    "${brightness.toInt()} / 255",
+                    color = white
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Slider(
+                    value = brightness,
+                    onValueChange = { brightness = it },
+                    valueRange = 1f..255f
+                )
 
                 Button(
                     onClick = {
-                        try {
-                            startActivity(
-                                Intent(Settings.ACTION_DISPLAY_SETTINGS)
+                        if (Settings.System.canWrite(context)) {
+                            val success = Settings.System.putInt(
+                                context.contentResolver,
+                                Settings.System.SCREEN_BRIGHTNESS,
+                                brightness.toInt()
                             )
-                            addLog("Pengaturan Display dibuka.")
-                        } catch (e: Exception) {
-                            addLog("Pengaturan Display gagal dibuka.")
+
+                            if (success) {
+                                addLog("Kecerahan layar berhasil diubah.")
+                            }
+                        } else {
+                            openBrightnessPermissionSettings()
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("BUKA PENGATURAN DISPLAY")
+                    Text("TERAPKAN KECERAHAN")
                 }
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "Jika izin belum tersedia, aktifkan izin ubah pengaturan sistem.",
+                    color = Color.LightGray
+                )
             }
+        }
+
+        Button(
+            onClick = {
+                openBrightnessPermissionSettings()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("IZINKAN PENGATURAN SISTEM")
         }
 
         BackButton()
