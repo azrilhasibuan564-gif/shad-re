@@ -83,7 +83,7 @@ private var injectProgress by mutableIntStateOf(0)
 private val history = mutableStateListOf<String>()  
 
 private var pointerSpeed by mutableFloatStateOf(0f)  
-private var originalPointerSpeed by mutableIntStateOf(0)  
+private var originalPointerSpeed: Int? = null  
 private var mouseStatus by mutableStateOf("Pointer belum diperiksa")  
 private var mouseBusy by mutableStateOf(false)  
 private var crosshairStatus by mutableStateOf("Overlay belum diperiksa")  
@@ -1443,13 +1443,15 @@ private fun applyPointerSpeed() {
 
 
 private fun restorePointerSpeed() {
-    if (originalPointerSpeed == null) {
+    val original = originalPointerSpeed
+
+    if (original == null) {
         mouseStatus = "Baca pointer speed terlebih dahulu."
         addLog(mouseStatus)
         return
     }
 
-    pointerSpeed = originalPointerSpeed.toFloat().coerceIn(-7f, 7f)
+    pointerSpeed = original.toFloat().coerceIn(-7f, 7f)
     applyPointerSpeed()
 }
 
