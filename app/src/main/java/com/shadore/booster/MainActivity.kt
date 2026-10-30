@@ -1457,15 +1457,55 @@ private fun refreshDeviceInfo() {
     recordHistory("Device Monitor", "SELESAI", "Informasi perangkat dibaca.")  
 }  
 
-private fun refreshPerformance() {  
-    val runtime = Runtime.getRuntime()  
-    val usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)  
-    val maxMb = runtime.maxMemory() / (1024 * 1024)  
-    performanceText = "Memori aplikasi: $usedMb MB digunakan dari batas heap $maxMb MB.\n" +  
-        "Ini bukan pengukuran FPS game."  
-    addLog("Metrik memori aplikasi diperbarui.")  
-    recordHistory("Performance Center", "SELESAI", "Metrik memori aplikasi dibaca.")  
-}  
+
+private fun refreshPerformance() {
+    val activityManager =
+        getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+    val memoryInfo = ActivityManager.MemoryInfo()
+    activityManager.getMemoryInfo(memoryInfo)
+
+    val totalRamMb = memoryInfo.totalMem / (1024 * 1024)
+    val availableRamMb = memoryInfo.availMem / (1024 * 1024)
+    val usedRamMb = totalRamMb - availableRamMb
+
+    val ramPercent = if (totalRamMb > 0) {
+        (usedRamMb * 100) / totalRamMb
+    } else {
+        0
+    }
+
+    val runtime = Runtime.getRuntime()
+    val appUsedMb =
+        (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+    val appMaxMb = runtime.maxMemory() / (1024 * 1024)
+
+    performanceText = """
+        STATUS PERFORMANCE CENTER
+
+        RAM PERANGKAT
+        Total RAM: $totalRamMb MB
+        RAM Terpakai: $usedRamMb MB
+        RAM Tersedia: $availableRamMb MB
+        Penggunaan RAM: $ramPercent%
+
+        MEMORI APLIKASI SHADØRE
+        Heap digunakan: $appUsedMb MB
+        Batas heap aplikasi: $appMaxMb MB
+
+        Catatan:
+        Data RAM merupakan perkiraan kondisi sistem.
+        Data ini bukan pengukuran FPS game.
+    """.trimIndent()
+
+    addLog("Metrik RAM dan memori aplikasi diperbarui.")
+    recordHistory(
+        "Performance Center",
+        "SELESAI",
+        "Metrik RAM perangkat dan memori aplikasi dibaca."
+    )
+}
+
 
 private fun runSystemCheck() {  
     val shizukuConnected = runCatching { Shizuku.pingBinder() }.getOrDefault(false)  
