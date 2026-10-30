@@ -1068,20 +1068,147 @@ private fun CrosshairPage() {
     }  
 }  
 
-@Composable  
-private fun DeviceMonitorPage() {  
-    Column(  
-        Modifier.fillMaxSize().background(bg).padding(20.dp),  
-        verticalArrangement = Arrangement.spacedBy(14.dp)  
-    ) {  
-        PageTitle("DEVICE MONITOR")  
-        Text(deviceText, color = white)  
-        Button(onClick = { refreshDeviceInfo() }, modifier = Modifier.fillMaxWidth()) {  
-            Text("PERIKSA PERANGKAT")  
-        }  
-        BackButton()  
-    }  
-}  
+
+@Composable
+private fun DeviceMonitorPage() {
+    val context = LocalContext.current
+    val monitorText = remember {
+        androidx.compose.runtime.mutableStateOf("")
+    }
+
+    fun refreshMonitor() {
+        try {
+            // RAM
+            val activityManager = context.getSystemService(
+                Context.ACTIVITY_SERVICE
+            ) as ActivityManager
+
+            val memory = ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memory)
+
+            val totalRam = memory.totalMem / (1024.0 * 1024.0 * 1024.0)
+            val usedRam = (memory.totalMem - memory.availMem) /
+                (1024.0 * 1024.0 * 1024.0)
+
+            // STORAGE
+            val stat = StatFs(
+                Environment.getDataDirectory().absolutePath
+            )
+
+            val totalStorage = stat.totalBytes /
+                (1024.0 * 1024.0 * 1024.0)
+
+            val freeStorage = stat.availableBytes /
+                (1024.0 * 1024.0 * 1024.0)
+
+            val usedStorage = totalStorage - freeStorage
+
+            // BATTERY
+            val battery = context.registerReceiver(
+                null,
+                IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            )
+
+            val level = battery?.getIntExtra(
+                BatteryManager.EXTRA_LEVEL, -1
+            ) ?: -1
+
+            val scale = battery?.getIntExtra(
+                BatteryManager.EXTRA_SCALE, -1
+            ) ?: -1
+
+            val batteryPercent = if (level >= 0 && scale > 0) {
+                level * 100 / scale
+            } else {
+                -1
+            }
+
+            val temperature = battery?.getIntExtra(
+                BatteryManager.EXTRA_TEMPERATURE, -1
+            ) ?: -1
+
+            // CPU
+            val cores = Runtime.getRuntime().availableProcessors()
+
+            val cpuName = if (Build.VERSION.SDK_INT >= 31) {
+                Build.SOC_MODEL
+            } else {
+                Build.HARDWARE
+            }
+
+            monitorText.value = """
+                DEVICE MONITOR
+
+                RAM
+                Total: ${String.format(Locale.US, "%.2f", totalRam)} GB
+                Terpakai: ${String.format(Locale.US, "%.2f", usedRam)} GB
+                Tersedia: ${String.format(Locale.US, "%.2f", memory.availMem / (1024.0 * 1024.0 * 1024.0))} GB
+
+                CPU
+                Prosesor: $cpuName
+                Jumlah core: $cores
+
+                BATTERY
+                Kapasitas: ${if (batteryPercent >= 0) "$batteryPercent%" else "Tidak tersedia"}
+                Suhu: ${if (temperature >= 0) "${String.format(Locale.US, "%.1f", temperature / 10.0)} °C" else "Tidak tersedia"}
+
+                STORAGE
+                Total: ${String.format(Locale.US, "%.2f", totalStorage)} GB
+                Terpakai: ${String.format(Locale.US, "%.2f", usedStorage)} GB
+                Tersedia: ${String.format(Locale.US, "%.2f", freeStorage)} GB
+            """.trimIndent()
+
+            addLog("Device Monitor berhasil diperbarui.")
+            recordHistory(
+                "Device Monitor",
+                "BERHASIL",
+                "Data RAM, CPU, baterai, dan storage dibaca."
+            )
+        } catch (e: Exception) {
+            monitorText.value = "Gagal membaca data perangkat: ${e.message}"
+            addLog("Device Monitor gagal diperbarui.")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        refreshMonitor()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        PageTitle("DEVICE MONITOR")
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = panel
+            ),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text(
+                text = monitorText.value,
+                color = white,
+                modifier = Modifier.padding(16.dp),
+                fontSize = 14.sp
+            )
+        }
+
+        Button(
+            onClick = { refreshMonitor() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("REFRESH DEVICE")
+        }
+
+        BackButton()
+    }
+}
 
 @Composable  
 private fun PerformancePage() {  
