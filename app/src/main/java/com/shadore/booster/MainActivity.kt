@@ -1005,40 +1005,82 @@ private fun DashboardInfoCard(
     }
 }
 
-@Composable  
-private fun GamePage() {  
-    Column(  
-        Modifier.fillMaxSize().background(bg).verticalScroll(rememberScrollState()).padding(20.dp),  
-        verticalArrangement = Arrangement.spacedBy(12.dp)  
-    ) {  
-        PageTitle("GAME CENTER")  
-        Text("Pilih aplikasi yang dapat diluncurkan.", color = white)  
-        val apps = remember {  
-            packageManager.getInstalledApplications(0)  
-                .filter { packageManager.getLaunchIntentForPackage(it.packageName) != null && it.packageName != packageName }  
-                .sortedBy { packageManager.getApplicationLabel(it).toString() }  
-        }  
-        if (apps.isEmpty()) Text("Tidak ditemukan aplikasi yang dapat diluncurkan.", color = white)  
-        apps.forEach { app ->  
-            Card(  
-                modifier = Modifier.fillMaxWidth().clickable {  
-                    packageManager.getLaunchIntentForPackage(app.packageName)?.let {  
-                        startActivity(it)  
-                        addLog("Meluncurkan ${packageManager.getApplicationLabel(app)}")  
-                    }  
-                },  
-                colors = CardDefaults.cardColors(containerColor = panel),  
-                shape = RoundedCornerShape(14.dp)  
-            ) {  
-                Column(Modifier.padding(14.dp)) {  
-                    Text(packageManager.getApplicationLabel(app).toString(), color = neon, fontWeight = FontWeight.Bold)  
-                    Text(app.packageName, color = Color.LightGray, fontSize = 10.sp)  
-                }  
-            }  
-        }  
-        BackButton()  
-    }  
-}  
+
+@Composable
+private fun GamePage() {
+    val context = LocalContext.current
+
+    val gamePackages = listOf(
+        "Free Fire" to "com.dts.freefireth",
+        "Free Fire MAX" to "com.dts.freefiremax"
+    )
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        PageTitle("GAME CENTER")
+
+        Text(
+            "Pilih game yang ingin kamu jalankan.",
+            color = white
+        )
+
+        gamePackages.forEach { (gameName, packageName) ->
+            val launchIntent = remember(packageName) {
+                context.packageManager.getLaunchIntentForPackage(packageName)
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = panel
+                ),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        gameName,
+                        color = neon,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        if (launchIntent != null) "Status: Terpasang"
+                        else "Status: Belum terpasang",
+                        color = Color.LightGray
+                    )
+
+                    Button(
+                        onClick = {
+                            val intent = context.packageManager
+                                .getLaunchIntentForPackage(packageName)
+
+                            if (intent != null) {
+                                context.startActivity(intent)
+                            } else {
+                                addLog("$gameName tidak ditemukan")
+                            }
+                        },
+                        enabled = launchIntent != null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("BUKA GAME")
+                    }
+                }
+            }
+        }
+
+        BackButton()
+    }
+}
 
 @Composable  
 private fun CrosshairPage() {  
