@@ -1,5 +1,13 @@
 package com.shadore.booster
 
+import android.app.ActivityManager
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.Build
+import android.os.Environment
+import android.os.StatFs
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -700,15 +708,74 @@ private fun DashboardPage() {
             )
         }
 
-        // INFORMASI PERANGKAT
+        
+        // INFORMASI PERANGKAT - DATA ANDROID
+        val context = LocalContext.current
+
+        val ramInfo = remember {
+            ActivityManager.MemoryInfo().also { info ->
+                val manager = context.getSystemService(
+                    Context.ACTIVITY_SERVICE
+                ) as ActivityManager
+                manager.getMemoryInfo(info)
+            }
+        }
+
+        val totalRam = ramInfo.totalMem.toDouble() /
+            (1024.0 * 1024.0 * 1024.0)
+        val usedRam = (ramInfo.totalMem - ramInfo.availMem)
+            .toDouble() / (1024.0 * 1024.0 * 1024.0)
+
+        val batteryIntent = remember {
+            context.registerReceiver(
+                null,
+                IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            )
+        }
+
+        val batteryLevel = batteryIntent?.let {
+            val level = it.getIntExtra(
+                BatteryManager.EXTRA_LEVEL, -1
+            )
+            val scale = it.getIntExtra(
+                BatteryManager.EXTRA_SCALE, -1
+            )
+            if (level >= 0 && scale > 0) {
+                level * 100 / scale
+            } else {
+                -1
+            }
+        } ?: -1
+
+        val batteryTemp = batteryIntent?.getIntExtra(
+            BatteryManager.EXTRA_TEMPERATURE, -1
+        ) ?: -1
+
+        val storage = remember {
+            StatFs(Environment.getDataDirectory().absolutePath)
+        }
+
+        val totalStorage = storage.totalBytes.toDouble() /
+            (1024.0 * 1024.0 * 1024.0)
+        val freeStorage = storage.availableBytes.toDouble() /
+            (1024.0 * 1024.0 * 1024.0)
+        val usedStorage = totalStorage - freeStorage
+        val storagePercent = if (totalStorage > 0) {
+            (usedStorage * 100 / totalStorage).toInt()
+        } else {
+            0
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             DashboardInfoCard(
                 "RAM",
-                "Lihat monitor",
-                "Penggunaan memori",
+                String.format(Locale.US, "%.1f GB", totalRam),
+                String.format(
+                    Locale.US, "%.1f GB digunakan", usedRam
+                ),
                 Modifier.weight(1f)
             ) {
                 currentPage = "Device Monitor"
@@ -716,8 +783,8 @@ private fun DashboardPage() {
 
             DashboardInfoCard(
                 "CPU",
-                "Perangkat",
-                "Informasi sistem",
+                "${Runtime.getRuntime().availableProcessors()} Core",
+                Build.HARDWARE.ifBlank { Build.SOC_MODEL },
                 Modifier.weight(1f)
             ) {
                 currentPage = "System Check"
@@ -730,8 +797,14 @@ private fun DashboardPage() {
         ) {
             DashboardInfoCard(
                 "Battery",
-                "Lihat monitor",
-                "Status baterai",
+                if (batteryLevel >= 0) "$batteryLevel%" else "Tidak tersedia",
+                if (batteryTemp >= 0) {
+                    String.format(
+                        Locale.US, "%.1f°C", batteryTemp / 10.0
+                    )
+                } else {
+                    "Suhu tidak tersedia"
+                },
                 Modifier.weight(1f)
             ) {
                 currentPage = "Device Monitor"
@@ -739,13 +812,14 @@ private fun DashboardPage() {
 
             DashboardInfoCard(
                 "Storage",
-                "Lihat monitor",
-                "Penyimpanan",
+                String.format(Locale.US, "%.0f GB", totalStorage),
+                "$storagePercent% digunakan",
                 Modifier.weight(1f)
             ) {
                 currentPage = "Device Monitor"
             }
         }
+        
 
         // INJECT
         Card(
